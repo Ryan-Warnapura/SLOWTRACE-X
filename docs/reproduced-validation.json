@@ -1,0 +1,271 @@
+{
+  "runAt": "2026-11-15T21:02:42.805526+00:00",
+  "recordedAt": "2026-11-15T21:00:21.660801+00:00",
+  "frames": 8,
+  "selectedFrameIndices": [
+    1,
+    3,
+    4,
+    5
+  ],
+  "excludedFrameIndices": [
+    0,
+    2,
+    6,
+    7
+  ],
+  "baselineDays": 360.52805228000216,
+  "experiment": {
+    "kind": "synthetic injections on real observations",
+    "method": "seeded additive Gaussian injection recovery v1",
+    "seed": 42,
+    "trials": 8,
+    "injectedSingleFrameNominalSnr": 3.0,
+    "injectedFluxPixelSum": 0.16180131235862635,
+    "motionArcsecDay": [
+      0.02,
+      0.0
+    ],
+    "velocityAxes": [
+      "west",
+      "south"
+    ],
+    "velocitiesArcsecDay": [
+      [
+        -0.02,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.02,
+        0.0
+      ]
+    ],
+    "thresholdSnr": 5.0,
+    "psfSigmaPixels": 1.0,
+    "selectedFrameIndices": [
+      1,
+      3,
+      4,
+      5
+    ],
+    "excludedFrameIndices": [
+      0,
+      2,
+      6,
+      7
+    ],
+    "baselineDays": 360.52805228000216,
+    "recovered": {
+      "shiftStack": 2,
+      "staticStack": 1,
+      "bestSingleFrame": 2
+    },
+    "recoveryFraction": {
+      "shiftStack": 0.25,
+      "staticStack": 0.125,
+      "bestSingleFrame": 0.25
+    },
+    "unInjectedControlPeaks": 20,
+    "negativeControlPeaks": 20,
+    "controlPeakCountCappedAt": 20,
+    "measurements": [
+      {
+        "x": 43,
+        "y": 11,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": 5.1285630037074945,
+        "staticStackSnr": 2.3039921600423785,
+        "bestSingleFrameSnr": 7.126862285504902,
+        "shiftStackRecovered": true,
+        "staticStackRecovered": false,
+        "singleFrameRecovered": true,
+        "unInjectedControlSnr": -13.175760791278027
+      },
+      {
+        "x": 20,
+        "y": 75,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": -23.72119304867128,
+        "staticStackSnr": -23.72119304867128,
+        "bestSingleFrameSnr": -7.750081054557292,
+        "shiftStackRecovered": false,
+        "staticStackRecovered": false,
+        "singleFrameRecovered": false,
+        "unInjectedControlSnr": -30.45268151438138
+      },
+      {
+        "x": 81,
+        "y": 81,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": -31.683112051064317,
+        "staticStackSnr": -31.683112051064317,
+        "bestSingleFrameSnr": -11.038487950231971,
+        "shiftStackRecovered": false,
+        "staticStackRecovered": false,
+        "singleFrameRecovered": false,
+        "unInjectedControlSnr": -40.09129666079584
+      },
+      {
+        "x": 26,
+        "y": 71,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": 10.647058677778693,
+        "staticStackSnr": 10.647058677778693,
+        "bestSingleFrameSnr": 7.895980241565856,
+        "shiftStackRecovered": true,
+        "staticStackRecovered": true,
+        "singleFrameRecovered": true,
+        "unInjectedControlSnr": -6.852038459763851
+      },
+      {
+        "x": 16,
+        "y": 38,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": 3.528481766407825,
+        "staticStackSnr": 0.5648321045848724,
+        "bestSingleFrameSnr": 3.7738867413300357,
+        "shiftStackRecovered": false,
+        "staticStackRecovered": false,
+        "singleFrameRecovered": false,
+        "unInjectedControlSnr": -3.2047408095712204
+      },
+      {
+        "x": 82,
+        "y": 38,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": -10.310323135891899,
+        "staticStackSnr": -10.310323135891899,
+        "bestSingleFrameSnr": -3.0255424397612867,
+        "shiftStackRecovered": false,
+        "staticStackRecovered": false,
+        "singleFrameRecovered": false,
+        "unInjectedControlSnr": -19.78535072949616
+      },
+      {
+        "x": 63,
+        "y": 11,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": -9.498251876850354,
+        "staticStackSnr": -9.498251876850354,
+        "bestSingleFrameSnr": -0.24980764984517817,
+        "shiftStackRecovered": false,
+        "staticStackRecovered": false,
+        "singleFrameRecovered": false,
+        "unInjectedControlSnr": -25.021033271688893
+      },
+      {
+        "x": 70,
+        "y": 78,
+        "injectedFluxPixelSum": 0.16180131235862635,
+        "shiftStackSnr": -11.562675254393902,
+        "staticStackSnr": -11.562675254393902,
+        "bestSingleFrameSnr": 0.051907772892835664,
+        "shiftStackRecovered": false,
+        "staticStackRecovered": false,
+        "singleFrameRecovered": false,
+        "unInjectedControlSnr": -24.493649730349652
+      }
+    ],
+    "notes": [
+      "Research measurements, not a discovery confirmation or calibrated probability.",
+      "Nominal S/N assumes independent Gaussian pixel errors; resampling correlates pixels, so significance can be overstated.",
+      "Per-frame median backgrounds are removed. Background-estimation and calibration uncertainties are not propagated.",
+      "A Gaussian PSF is an explicit approximation, not the detector's calibrated effective PSF.",
+      "Wavelengths from WCS-WAVE are approximate visualization metadata; matching does not establish identical bandpasses.",
+      "Velocity trials and source peaks involve multiple comparisons. Listed S/N values have no trials correction.",
+      "Synthetic sources are added to the supplied real sky images; original observations are unchanged.",
+      "The true injected velocity is included in the search grid. This is a controlled sensitivity study, not a blind evaluation.",
+      "Injection adds flux but no extra Poisson noise. The experiment applies to weak sources dominated by background noise.",
+      "Both injector and detector assume a Gaussian PSF; this optimistic model match does not test PSF mismatch.",
+      "All methods use the same threshold; unequal trial counts mean this is not an equal-false-alarm comparison.",
+      "Control counts include real celestial structure and are not a calibrated false-positive rate.",
+      "Recovery means a threshold crossing within one pixel of the known injected location. No independent held-out observations were used."
+    ]
+  },
+  "observationProvenance": [
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0432_4D1_spx_l2b-v27-2026-230.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0432_4D1_spx_l2b-v27-2026-230.fits",
+      "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0432_4D1_spx_l2b-v27-2026-230.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+      "retrievedAt": "2026-11-15T21:00:15.915705+00:00",
+      "sha256": "40cbc07107fd63ea4684e9e899f275d3040946282bbee8998cf3d7031db60578",
+      "method": "IRSA cutout",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "79cafd0ea7ae030a024d6555fd232c9bca389398ad7262d6a0ce1e667a001777"
+    },
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0658_1D1_spx_l2b-v27-2026-230.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0658_1D1_spx_l2b-v27-2026-230.fits",
+      "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0658_1D1_spx_l2b-v27-2026-230.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+      "retrievedAt": "2026-11-15T21:00:15.993480+00:00",
+      "sha256": "1ed0ecc6c9228b8507a319ef918e626f5fa3d847abb31c382e4291ad2bd1281d",
+      "method": "IRSA cutout",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "70ea23e713a345b831adcba3eac9ca6264d05009a0fc25afbf7b8239146171be"
+    },
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_2D1_spx_l2b-v27-2026-232.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_2D1_spx_l2b-v27-2026-232.fits",
+      "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_2D1_spx_l2b-v27-2026-232.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+      "retrievedAt": "2026-11-15T21:00:15.812947+00:00",
+      "sha256": "3d825f87f53dab6453cf40234cf039eaef78da30f291af3310563df44fd6e9de",
+      "method": "IRSA cutout",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "29335b6dcce50046a5e78ffba14dc1d8c3b5cdfed04b5003410ef6548f9fd5f4"
+    },
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_3D1_spx_l2b-v27-2026-232.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_3D1_spx_l2b-v27-2026-232.fits",
+      "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_3D1_spx_l2b-v27-2026-232.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+      "retrievedAt": "2026-11-15T21:00:18.665200+00:00",
+      "sha256": "abf4648d2d88a7dcd6c43a3ea4aeb34345b6a5b2652b9f3b0a6c76d862c7965f",
+      "method": "IRSA cutout",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "a5819d5208a61adc96cd18eee0417ab234bbf3f9012c1e395827080efde1c468"
+    },
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_4D1_spx_l2b-v27-2026-232.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2026W11_1A/l2b-v27-2026-232/1/level2_2026W11_1A_0430_4D1_spx_l2b-v27-2026-232.fits",
+      "cutoutUrl": null,
+      "retrievedAt": "2026-11-15T21:00:18.265119+00:00",
+      "sha256": null,
+      "method": "NASA public S3 range reads",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "bd2d78d9616c88bad92f786846550939572d8a6566a5b08662832f103de8865b"
+    },
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_1D1_spx_l2b-v27-2026-243.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_1D1_spx_l2b-v27-2026-243.fits",
+      "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_1D1_spx_l2b-v27-2026-243.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+      "retrievedAt": "2026-11-15T21:00:19.190729+00:00",
+      "sha256": "ea0d130dcbbf6890c3d0a90221f5469f853e0ab78142f2651ad9221f97241636",
+      "method": "IRSA cutout",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "319b15fc41600e3daee3b7e71bce3ee2b66d3ca24ba41f6d93a19df40daeb3c6"
+    },
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_2D1_spx_l2b-v27-2026-243.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_2D1_spx_l2b-v27-2026-243.fits",
+      "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_2D1_spx_l2b-v27-2026-243.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+      "retrievedAt": "2026-11-15T21:00:20.880763+00:00",
+      "sha256": "12800336632b641911e26c1d4fa1793a9b014be8f45699b7bc30a028d839d2ef",
+      "method": "IRSA cutout",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "59b1d6399bf9f76e36961819ddb7959ac9073f7c486543fbade74f313cf040d0"
+    },
+    {
+      "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_3D1_spx_l2b-v27-2026-243.fits",
+      "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_3D1_spx_l2b-v27-2026-243.fits",
+      "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W34_2A/l2b-v27-2026-243/1/level2_2026W34_2A_0757_3D1_spx_l2b-v27-2026-243.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+      "retrievedAt": "2026-11-15T21:00:21.631547+00:00",
+      "sha256": "e1ffd726e0bc4d0444f6ebf278ea4682d18ef550d6dffacea57e1f387bc21cc2",
+      "method": "IRSA cutout",
+      "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+      "processedSha256": "62efe632edd7f6b634e697ee7a867bf15a95f0313c785ea6566b046e445b2b6d"
+    }
+  ]
+}
