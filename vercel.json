@@ -6,7 +6,7 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 300,
-      "excludeFiles": "{node_modules/**,src/**,tests/**,docs/**,.git/**,work/**}"
+      "excludeFiles": "{node_modules/**,src/**,tests/**,docs/**,public/**,dist/**,.git/**,work/**}"
     }
   },
   "rewrites": [

@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-11-15T21:02:42.805526+00:00",
+  "runAt": "2026-11-15T21:06:02.066800+00:00",
   "recordedAt": "2026-11-15T21:00:21.660801+00:00",
   "frames": 8,
   "selectedFrameIndices": [
@@ -77,37 +77,37 @@
         "x": 43,
         "y": 11,
         "injectedFluxPixelSum": 0.16180131235862635,
-        "shiftStackSnr": 5.1285630037074945,
-        "staticStackSnr": 2.3039921600423785,
-        "bestSingleFrameSnr": 7.126862285504902,
+        "shiftStackSnr": 5.128563003707497,
+        "staticStackSnr": 2.3039921600423794,
+        "bestSingleFrameSnr": 7.126862285504904,
         "shiftStackRecovered": true,
         "staticStackRecovered": false,
         "singleFrameRecovered": true,
-        "unInjectedControlSnr": -13.175760791278027
+        "unInjectedControlSnr": -13.175760791278028
       },
       {
         "x": 20,
         "y": 75,
         "injectedFluxPixelSum": 0.16180131235862635,
-        "shiftStackSnr": -23.72119304867128,
-        "staticStackSnr": -23.72119304867128,
-        "bestSingleFrameSnr": -7.750081054557292,
+        "shiftStackSnr": -23.721193048671278,
+        "staticStackSnr": -23.721193048671278,
+        "bestSingleFrameSnr": -7.750081054557291,
         "shiftStackRecovered": false,
         "staticStackRecovered": false,
         "singleFrameRecovered": false,
-        "unInjectedControlSnr": -30.45268151438138
+        "unInjectedControlSnr": -30.452681514381375
       },
       {
         "x": 81,
         "y": 81,
         "injectedFluxPixelSum": 0.16180131235862635,
-        "shiftStackSnr": -31.683112051064317,
-        "staticStackSnr": -31.683112051064317,
-        "bestSingleFrameSnr": -11.038487950231971,
+        "shiftStackSnr": -31.683112051064313,
+        "staticStackSnr": -31.683112051064313,
+        "bestSingleFrameSnr": -11.038487950231968,
         "shiftStackRecovered": false,
         "staticStackRecovered": false,
         "singleFrameRecovered": false,
-        "unInjectedControlSnr": -40.09129666079584
+        "unInjectedControlSnr": -40.09129666079585
       },
       {
         "x": 26,
@@ -115,31 +115,31 @@
         "injectedFluxPixelSum": 0.16180131235862635,
         "shiftStackSnr": 10.647058677778693,
         "staticStackSnr": 10.647058677778693,
-        "bestSingleFrameSnr": 7.895980241565856,
+        "bestSingleFrameSnr": 7.89598024156586,
         "shiftStackRecovered": true,
         "staticStackRecovered": true,
         "singleFrameRecovered": true,
-        "unInjectedControlSnr": -6.852038459763851
+        "unInjectedControlSnr": -6.852038459763847
       },
       {
         "x": 16,
         "y": 38,
         "injectedFluxPixelSum": 0.16180131235862635,
-        "shiftStackSnr": 3.528481766407825,
-        "staticStackSnr": 0.5648321045848724,
-        "bestSingleFrameSnr": 3.7738867413300357,
+        "shiftStackSnr": 3.5284817664078263,
+        "staticStackSnr": 0.5648321045848723,
+        "bestSingleFrameSnr": 3.773886741330036,
         "shiftStackRecovered": false,
         "staticStackRecovered": false,
         "singleFrameRecovered": false,
-        "unInjectedControlSnr": -3.2047408095712204
+        "unInjectedControlSnr": -3.2047408095712213
       },
       {
         "x": 82,
         "y": 38,
         "injectedFluxPixelSum": 0.16180131235862635,
-        "shiftStackSnr": -10.310323135891899,
-        "staticStackSnr": -10.310323135891899,
-        "bestSingleFrameSnr": -3.0255424397612867,
+        "shiftStackSnr": -10.3103231358919,
+        "staticStackSnr": -10.3103231358919,
+        "bestSingleFrameSnr": -3.025542439761286,
         "shiftStackRecovered": false,
         "staticStackRecovered": false,
         "singleFrameRecovered": false,
@@ -149,25 +149,25 @@
         "x": 63,
         "y": 11,
         "injectedFluxPixelSum": 0.16180131235862635,
-        "shiftStackSnr": -9.498251876850354,
-        "staticStackSnr": -9.498251876850354,
-        "bestSingleFrameSnr": -0.24980764984517817,
+        "shiftStackSnr": -9.498251876850352,
+        "staticStackSnr": -9.498251876850352,
+        "bestSingleFrameSnr": -0.24980764984517786,
         "shiftStackRecovered": false,
         "staticStackRecovered": false,
         "singleFrameRecovered": false,
-        "unInjectedControlSnr": -25.021033271688893
+        "unInjectedControlSnr": -25.0210332716889
       },
       {
         "x": 70,
         "y": 78,
         "injectedFluxPixelSum": 0.16180131235862635,
-        "shiftStackSnr": -11.562675254393902,
-        "staticStackSnr": -11.562675254393902,
-        "bestSingleFrameSnr": 0.051907772892835664,
+        "shiftStackSnr": -11.5626752543939,
+        "staticStackSnr": -11.5626752543939,
+        "bestSingleFrameSnr": 0.05190777289283568,
         "shiftStackRecovered": false,
         "staticStackRecovered": false,
         "singleFrameRecovered": false,
-        "unInjectedControlSnr": -24.493649730349652
+        "unInjectedControlSnr": -24.493649730349663
       }
     ],
     "notes": [

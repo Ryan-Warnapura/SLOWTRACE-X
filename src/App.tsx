@@ -547,7 +547,7 @@ export default function App() {
               target="_blank"
               rel="noreferrer"
             >
-              Open source project <ExternalLink size={13} />
+              GitHub repository <ExternalLink size={13} />
             </a>
           </div>
         </aside>
@@ -1690,7 +1690,7 @@ function ScientificResult({ result }: { result: Result }) {
                     {fmt(c.velocityWestArcsecDay, 3)},{" "}
                     {fmt(c.velocitySouthArcsecDay, 3)} ″/d
                   </td>
-                  <td>Unverified residual</td>
+                  <td>{c.velocityWestArcsecDay || c.velocitySouthArcsecDay ? "Motion trial peak" : "Stationary trial peak"}</td>
                 </tr>
               ))}
             </tbody>
@@ -1817,7 +1817,7 @@ function Methods() {
           ],
           [
             "Source code & reproducibility",
-            "https://github.com/katz1nskyy/Novaryn",
+            "/source.zip",
           ],
         ].map(([label, url]) => (
           <a

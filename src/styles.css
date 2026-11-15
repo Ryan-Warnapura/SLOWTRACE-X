@@ -627,6 +627,7 @@ main {
 }
 .sky-canvas {
   position: relative;
+  container-type: size;
   height: 420px;
   background: #090e11;
   overflow: hidden;
@@ -1953,8 +1954,8 @@ td {
 }
 .image-plane {
   max-width: 100%;
-  height: auto;
-  width: auto;
+  height: min(100cqw, 100cqh);
+  width: min(100cqw, 100cqh);
   max-height: 100%;
   aspect-ratio: 1;
 }

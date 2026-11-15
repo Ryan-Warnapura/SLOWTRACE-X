@@ -60,10 +60,10 @@ class AnalysisRequest(BaseModel):
     observations: list[FrameReference] = Field(default_factory=list, max_length=8)
     threshold: float = Field(5.0, ge=3, le=12)
     velocities: list[tuple[float, float]] | None = Field(None, max_length=49)
-    psfSigma: float = Field(1.0, ge=0.5, le=4)
+    psfSigma: float = Field(1.0, ge=0.6, le=2)
     seed: int = Field(42, ge=0, le=2147483647)
-    trials: int = Field(8, ge=2, le=24)
-    injectedSnr: float = Field(3.0, ge=0.5, le=20)
+    trials: int = Field(8, ge=2, le=16)
+    injectedSnr: float = Field(3.0, ge=0.5, le=15)
     motion: tuple[float, float] = (0.02, 0.0)
 
 

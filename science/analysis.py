@@ -11,7 +11,7 @@ import math
 from typing import Sequence
 
 import numpy as np
-from scipy import ndimage
+from numpy.lib.stride_tricks import sliding_window_view
 
 RESOLVING_POWER = {1: 39, 2: 41, 3: 41, 4: 35, 5: 112, 6: 128}
 NOTES = [
@@ -161,15 +161,26 @@ def gaussian_psf(sigma: float):
     return kernel / kernel.sum()
 
 
+def _separable_gaussian(image, kernel):
+    """Apply the same symmetric one-dimensional kernel in each direction."""
+    radius = len(kernel) // 2
+    for axis in (0, 1):
+        padding = [(0, 0), (0, 0)]
+        padding[axis] = (radius, radius)
+        windows = sliding_window_view(np.pad(image, padding), len(kernel), axis=axis)
+        image = np.einsum("ijk,k->ij", windows, kernel)
+    return image
+
+
 def matched_filter(image, variance, bad, sigma=1.0):
     """Maximum-likelihood flux and S/N for a unit-integral Gaussian template."""
     image, variance, bad = np.asarray(image), np.asarray(variance), np.asarray(bad, bool)
-    psf = gaussian_psf(sigma)
+    kernel = gaussian_psf(sigma).sum(axis=0)
     good = ~bad & np.isfinite(image) & np.isfinite(variance) & (variance > 0)
     inverse = np.divide(1, variance, out=np.zeros_like(variance), where=good)
-    numerator = ndimage.convolve(np.where(good, image, 0)*inverse, psf, mode="constant", cval=0)
-    denominator = ndimage.convolve(inverse, psf**2, mode="constant", cval=0)
-    coverage = ndimage.convolve(good.astype(float), psf, mode="constant", cval=0)
+    numerator = _separable_gaussian(np.where(good, image, 0)*inverse, kernel)
+    denominator = _separable_gaussian(inverse, kernel**2)
+    coverage = _separable_gaussian(good.astype(float), kernel)
     valid = (coverage >= 0.95) & (denominator > 0)
     amplitude = np.divide(numerator, denominator, out=np.full_like(numerator, np.nan), where=valid)
     error = np.sqrt(np.divide(1, denominator, out=np.full_like(numerator, np.nan), where=valid))
@@ -212,7 +223,8 @@ def _search(cube, vectors, pixel_arcsec, sigma, threshold):
         best_amplitude[use], best_error[use] = amplitude[use], error[use]
     best[~np.isfinite(best)] = np.nan
     finite = np.where(np.isfinite(best), best, -np.inf)
-    peak = (finite == ndimage.maximum_filter(finite, size=5, mode="constant", cval=-np.inf)) & (finite >= threshold)
+    neighborhoods = sliding_window_view(np.pad(finite, 2, constant_values=-np.inf), (5, 5))
+    peak = (finite == neighborhoods.max(axis=(-1, -2))) & (finite >= threshold)
     yx = np.argwhere(peak)
     yx = sorted(yx, key=lambda p: -best[p[0], p[1]])[:20]
     candidates = []
