@@ -1,0 +1,69 @@
+/* Design tokens. See DESIGN.md. */
+:root {
+  /* Surfaces: the page is the instrument body; wells are recessed into it. */
+  --field: #000;
+  --deep: #08090b;
+  --well: #0f1113;
+  --graphite: #1e2023;
+  --key: #2b2e33;
+  --key-hover: #363a40;
+  --rule: #363a40;
+  --rule-strong: #4f545c;
+
+  /* Engraving: text and the single emphasis colour. */
+  --text: #efede6;
+  --text-2: #b6b4ad;
+  --text-3: #8d8b85;
+  --on-text: #121315;
+
+  /* Status lamps. */
+  --ok: #63d18f;
+  --caution: #f2b84b;
+  --fault: #f26b5e;
+
+  /* Wavelength code, D1 to D6 (0.75 to 5.0 µm). Data only. */
+  --band-1: #b18cf5;
+  --band-2: #6ea4f2;
+  --band-3: #45c9b3;
+  --band-4: #a8cc4e;
+  --band-5: #e6b93f;
+  --band-6: #f07a55;
+
+  /* Type. */
+  --display: "Old Standard TT", "Iowan Old Style", "Times New Roman", serif;
+  --ui: "B612", "Segoe UI", system-ui, sans-serif;
+  --code: "B612 Mono", ui-monospace, Menlo, monospace;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-32: 32px;
+  --fs-44: 44px;
+  --fs-64: 64px;
+
+  /* Space, on a 4px grid. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-24: 96px;
+  --gutter: 24px;
+  --page: 1680px;
+  --header-h: 52px;
+
+  --r-key: 2px;
+  --r-well: 4px;
+  --control-h: 30px;
+  --fast: 120ms;
+}
+@media (max-width: 760px) {
+  :root {
+    --gutter: 16px;
+  }
+}

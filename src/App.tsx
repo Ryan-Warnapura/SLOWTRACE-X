@@ -46,6 +46,8 @@ import { toast } from "sonner";
 import SkyCanvas from "./SkyCanvas";
 import EvidenceMaps from "./EvidenceMaps";
 import AladinPanel from "./AladinPanel";
+import { bandColor, wavelengthColor } from "./wavelength";
+import type { CSSProperties } from "react";
 const SpectrumChart = lazy(() =>
   import("./Charts").then((m) => ({ default: m.SpectrumChart })),
 );
@@ -108,12 +110,12 @@ type Note = {
 };
 type Result = Record<string, any>;
 const TOOLS = [
-  { id: "observe", label: "Observation desk", icon: Telescope },
-  { id: "trace", label: "DeepTrace search", icon: ScanLine },
-  { id: "spectra", label: "Spectral explorer", icon: Waves },
-  { id: "lab", label: "Experiment lab", icon: FlaskConical },
-  { id: "notebook", label: "Research notebook", icon: NotebookPen },
-  { id: "planner", label: "Follow-up planner", icon: Compass },
+  { id: "observe", label: "Blink viewer" },
+  { id: "trace", label: "DeepTrace" },
+  { id: "spectra", label: "Spectra" },
+  { id: "lab", label: "Experiment lab" },
+  { id: "notebook", label: "Notebook" },
+  { id: "planner", label: "Planner" },
 ] as const;
 const NAV = [
   { id: "home", label: "Mission" },
@@ -121,13 +123,6 @@ const NAV = [
   { id: "atlas", label: "Sky Atlas" },
   { id: "spectra", label: "Spectra" },
   { id: "survey", label: "Discoveries" },
-] as const;
-const MISSION_NAV = [
-  { id: "home", label: "Mission" },
-  { id: "atlas", label: "Sky Atlas" },
-  { id: "survey", label: "Discoveries" },
-  { id: "stats", label: "Statistics" },
-  { id: "solar", label: "Solar System" },
 ] as const;
 const MORE = [
   { id: "trace", label: "DeepTrace" },
@@ -139,19 +134,76 @@ const MORE = [
   { id: "methods", label: "Methods" },
 ] as const;
 const TITLES: Record<Page, [string, string]> = {
-  home: ["SLOWTRACE X", "SPHEREx multi-epoch viewer."],
-  stats: ["Survey statistics", "Measured results from the published survey."],
-  solar: ["Solar System", "JPL ephemerides along a sightline."],
-  observe: ["Observe", "Blink SPHEREx epochs at a sky position."],
-  survey: ["Discoveries", "Processed fields, measured peaks, catalog checks."],
-  atlas: ["Sky Atlas", "Browse coordinates and open a field."],
-  trace: ["DeepTrace", "Shift-and-stack motion search on the loaded epochs."],
-  spectra: ["Spectra", "Aperture measurements across the loaded channels."],
-  lab: ["Experiment lab", "Injection and recovery on real backgrounds."],
-  notebook: ["Notebook", "Local notes and classifications."],
-  planner: ["Planner", "Visibility for the selected position and site."],
-  methods: ["Methods", "Sources, calculations, and limits."],
+  home: ["SLOWTRACE X", "A blink comparator for NASA SPHEREx exposures."],
+  observe: ["Observe", "Blink SPHEREx exposures of one sky position."],
+  atlas: ["Sky Atlas", "Find a position in the sky and open the exposures behind it."],
+  survey: [
+    "Discoveries",
+    "Every processed field, the peaks the search kept, and the catalog checks run against them.",
+  ],
+  stats: [
+    "Survey statistics",
+    "The measured results behind the published survey: coverage, detections and the injection study.",
+  ],
+  solar: [
+    "Solar System",
+    "Where the planets are, from JPL Horizons, and how a candidate sightline passes through.",
+  ],
+  trace: [
+    "DeepTrace motion search",
+    "Shift and stack the loaded exposures along trial motions, then rank what stands out.",
+  ],
+  spectra: [
+    "Spectra",
+    "Brightness at the selected position in each loaded exposure, by wavelength or by date.",
+  ],
+  lab: [
+    "Experiment lab",
+    "Inject synthetic moving sources into the real exposures and measure how many the search recovers.",
+  ],
+  notebook: [
+    "Notebook",
+    "Write down what you see. Notes stay in this browser with the source files attached.",
+  ],
+  planner: [
+    "Follow-up planner",
+    "When the selected position is high in a dark sky from your site.",
+  ],
+  methods: [
+    "Methods",
+    "What the tool reads, what it calculates, and what it does not claim.",
+  ],
 };
+/** Pages that open with a title and one line of explanation. */
+const HEADED: Page[] = ["survey", "stats", "solar", "methods"];
+const MODES = [
+  ["blink", "Blink", "Flick between exposures in place"],
+  ["difference", "Difference", "Selected exposure minus the reference"],
+  ["overlay", "Overlay", "Selected exposure blended with the reference"],
+  ["split", "Side by side", "Reference and selected exposure next to each other"],
+] as const;
+const band = (microns?: number | null) =>
+  ({ "--band": wavelengthColor(microns) }) as CSSProperties;
+/** The label strip under a plate: date, band and wavelength. */
+function plateLabel(f: Frame) {
+  return (
+    <>
+      <span className="num">{f.metadata.date.slice(0, 10)}</span>
+      <span className="band" style={band(f.metadata.wavelengthCenter)}>
+        D{f.metadata.detector}, {fmt(f.metadata.wavelengthCenter, 3)} µm
+      </span>
+    </>
+  );
+}
+function Mark() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="1" y="1" width="18" height="18" stroke="currentColor" />
+      <circle cx="12.5" cy="7.5" r="2" stroke="currentColor" />
+      <circle cx="7.5" cy="12.5" r="2" fill="currentColor" />
+    </svg>
+  );
+}
 type LoadSource =
   | { kind: "recorded"; path: string }
   | { kind: "fits"; urls: string[]; label: string; pixels?: number };
@@ -256,76 +308,6 @@ function Notice({
   );
 }
 
-function MissionHeader({
-  mobile,
-  toggleMenu,
-  go,
-}: {
-  mobile: boolean;
-  toggleMenu: () => void;
-  go: (page: Page) => void;
-}) {
-  return (
-    <header className="mission-header">
-      <button
-        className="mission-brand"
-        onClick={() => go("home")}
-        aria-label="SLOWTRACE X home"
-      >
-        <img src="/mark.svg" alt="" />
-        <span>
-          SLOWTRACE <b>X</b>
-          <small>SPHEREx RESEARCH</small>
-        </span>
-      </button>
-      <button
-        className="mission-menu icon-button"
-        aria-expanded={mobile}
-        aria-controls="mission-navigation"
-        aria-label={mobile ? "Close navigation" : "Open navigation"}
-        onClick={toggleMenu}
-      >
-        {mobile ? <X size={21} /> : <Menu size={21} />}
-      </button>
-      <nav
-        id="mission-navigation"
-        aria-label="Main navigation"
-        className={`mission-nav ${mobile ? "open" : ""}`}
-      >
-        {MISSION_NAV.map(({ id, label }) => (
-          <button
-            key={id}
-            className={id === "home" ? "active" : ""}
-            aria-current={id === "home" ? "page" : undefined}
-            onClick={() => go(id)}
-          >
-            {label}
-          </button>
-        ))}
-        <button className="mobile-desk" onClick={() => go("observe")}>
-          Observation desk
-        </button>
-        <button className="mobile-desk" onClick={() => go("methods")}>
-          Methods and provenance
-        </button>
-      </nav>
-      <div className="header-actions">
-        <button
-          className="icon-button"
-          aria-label="Methods and provenance"
-          title="Methods and provenance"
-          onClick={() => go("methods")}
-        >
-          <BookOpen size={18} />
-        </button>
-        <button className="secondary header-desk" onClick={() => go("observe")}>
-          <Telescope size={16} /> Observation desk
-        </button>
-      </div>
-    </header>
-  );
-}
-
 export default function App() {
   const [page, setPage] = useState<Page>(initialPage),
     [spatialFocus, setSpatialFocus] = useState(initialFocus),
@@ -356,7 +338,7 @@ export default function App() {
     [showTrack, setShowTrack] = useState(true),
     [blend, setBlend] = useState(0.45),
     [contrast, setContrast] = useState(1),
-    [palette, setPalette] = useState("ice"),
+    [palette, setPalette] = useState("mono"),
     [point, setPoint] = useState<{ x: number; y: number } | null>(null),
     [result, setResult] = useState<Result | null>(null),
     [experiment, setExperiment] = useState<Result | null>(null),
@@ -388,7 +370,7 @@ export default function App() {
       if (
         event instanceof KeyboardEvent
           ? event.key === "Escape"
-          : !(event.target as Element).closest?.(".navbar-more")
+          : !(event.target as Element).closest?.(".masthead-more")
       )
         setMoreOpen(false);
     };
@@ -420,6 +402,33 @@ export default function App() {
     setActiveUrl(timeline[index]?.provenance.sourceUrl || "");
     setPlaying(false);
   };
+  const stepEpoch = (step: number) =>
+    selectEpoch((active + step + timeline.length) % timeline.length);
+  useEffect(() => {
+    if (page !== "observe") return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const element = event.target as HTMLElement;
+      if (
+        element.closest?.(
+          "input, select, textarea, button, a, summary, [contenteditable]",
+        )
+      )
+        return;
+      if (event.key === " " && mode === "blink" && timeline.length > 1) {
+        event.preventDefault();
+        setPlaying((value) => !value);
+      } else if (
+        (event.key === "[" || event.key === "]") &&
+        timeline.length > 1
+      ) {
+        event.preventDefault();
+        stepEpoch(event.key === "]" ? 1 : -1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
   const commonStretch = useMemo<[number, number] | undefined>(() => {
     if (!frames.length) return;
     const values = frames.flatMap((f) =>
@@ -1033,45 +1042,67 @@ export default function App() {
         })
       : undefined;
   const researchPage = TOOLS.some((tool) => tool.id === page);
+  const sourceLamp = !frame
+    ? { state: "off", label: "No exposures loaded" }
+    : search?.status === "recorded-observations"
+      ? { state: "ok", label: "Recorded NASA data" }
+      : search?.status === "recorded-metadata"
+        ? { state: "caution", label: "NASA pixels, recorded index" }
+        : search?.status === "partial-live" ||
+            search?.searchCoverage?.complete === false
+          ? { state: "caution", label: "NASA pixels, partial search" }
+          : { state: "ok", label: "NASA archive" };
   const warnings = [...(search?.warnings || []), ...(frame?.warnings || [])];
   return (
     <Tooltip.Provider>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <div className="app-shell">
-        <div
-          className={`workspace mission-workspace${page === "home" ? " is-mission" : ""}`}
-        >
-          {page === "home" ? (
-            <MissionHeader
-              mobile={mobile}
-              toggleMenu={() => setMobile(!mobile)}
-              go={go}
-            />
-          ) : (
-            <header className="navbar">
+      <div className="app">
+        <header className="masthead">
+          <button
+            className="masthead-brand"
+            onClick={() => go("home")}
+            aria-label="SLOWTRACE X, mission page"
+          >
+            <Mark />
+            <span>SLOWTRACE X</span>
+          </button>
+          <button
+            className="masthead-menu btn btn-icon"
+            aria-expanded={mobile}
+            aria-controls="main-navigation"
+            aria-label={mobile ? "Close navigation" : "Open navigation"}
+            onClick={() => setMobile(!mobile)}
+          >
+            {mobile ? <X size={16} /> : <Menu size={16} />}
+          </button>
+          <nav
+            id="main-navigation"
+            aria-label="Main navigation"
+            className={`masthead-nav${mobile ? " open" : ""}`}
+          >
+            {NAV.map(({ id, label }) => (
               <button
-                className="navbar-brand"
-                onClick={() => go("home")}
-                aria-label="SLOWTRACE X home"
+                key={id}
+                className={page === id ? "active" : ""}
+                aria-current={page === id ? "page" : undefined}
+                onClick={() => go(id)}
               >
-                <img src="/mark.svg" alt="" />
-                SLOWTRACE X
+                {label}
               </button>
+            ))}
+            <div className="masthead-more">
               <button
-                className="navbar-menu"
-                aria-expanded={mobile}
-                aria-label={mobile ? "Close navigation" : "Open navigation"}
-                onClick={() => setMobile(!mobile)}
+                className={MORE.some((m) => m.id === page) ? "active" : ""}
+                aria-haspopup="true"
+                aria-expanded={moreOpen}
+                onClick={() => setMoreOpen(!moreOpen)}
               >
-                {mobile ? <X size={18} /> : <Menu size={18} />}
+                More <ChevronDown size={14} />
               </button>
-              <nav
-                aria-label="Main navigation"
-                className={`navbar-nav ${mobile ? "open" : ""}`}
-              >
-                {NAV.map(({ id, label }) => (
+              <div className={`masthead-more-menu${moreOpen ? " open" : ""}`}>
+                {MORE.map(({ id, label }) => (
                   <button
                     key={id}
                     className={page === id ? "active" : ""}
@@ -1081,135 +1112,156 @@ export default function App() {
                     {label}
                   </button>
                 ))}
-                <div className="navbar-more">
-                  <button
-                    className={MORE.some((m) => m.id === page) ? "active" : ""}
-                    aria-haspopup="true"
-                    aria-expanded={moreOpen}
-                    onClick={() => setMoreOpen(!moreOpen)}
-                  >
-                    More <ChevronDown size={14} />
-                  </button>
-                  <div className={`navbar-more-menu ${moreOpen ? "open" : ""}`}>
-                    {MORE.map(({ id, label }) => (
-                      <button
-                        key={id}
-                        className={page === id ? "active" : ""}
-                        aria-current={page === id ? "page" : undefined}
-                        onClick={() => go(id)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </nav>
-            </header>
-          )}
-          <main id="main" className={`view-${page}`}>
+              </div>
+            </div>
+          </nav>
+        </header>
+        <main id="main" className={`view-${page}`}>
             {page === "home" && (
-              <MissionHome onNavigate={navigate} onExample={chooseTarget} />
+              <MissionHome
+                onNavigate={go}
+                onExample={chooseTarget}
+                onPosition={(ra, dec) => {
+                  navigate("observe");
+                  void load({ ra, dec, fov: 5, detector: 0 });
+                }}
+              />
             )}
-            {page !== "home" && page !== "atlas" && (
-              <div className={`page-heading ${page === "observe" ? "sr-only" : ""}`}>
-                <div>
-                  <h1>{TITLES[page][0]}</h1>
-                  <p>{TITLES[page][1]}</p>
-                </div>
+            {page === "observe" && <h1 className="sr-only">Observe</h1>}
+            {HEADED.includes(page) && !researchPage && (
+              <div className="page-heading">
+                <h1 className="title-page">{TITLES[page][0]}</h1>
+                <p className="lede">{TITLES[page][1]}</p>
               </div>
             )}
             {researchPage && (
-              <div className="ob-top">
-                <div className="ob-picks" aria-label="Challenge targets">
-                  <span>Targets</span>
-                  {TARGETS.map((t, i) => (
-                    <button
-                      key={t.name}
-                      className={target?.name === t.name ? "selected" : ""}
-                      aria-pressed={target?.name === t.name}
-                      title={t.type}
-                      onClick={() => chooseTarget(i)}
-                    >
-                      {t.name}
-                    </button>
-                  ))}
-                </div>
-                <form
-                  className="ob-query"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    submitField();
-                  }}
-                >
-                  <label>
-                    <span>RA</span>
-                    <input
-                      aria-label="Right ascension, degrees or hours minutes seconds"
-                      title="ICRS. Decimal degrees or 08h55m10.831s"
-                      type="text"
-                      required
-                      value={raText}
-                      onChange={(e) => setRaText(e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>Dec</span>
-                    <input
-                      aria-label="Declination, decimal or sexagesimal degrees"
-                      title="ICRS. Decimal degrees or −07d14m42.53s"
-                      type="text"
-                      required
-                      value={decText}
-                      onChange={(e) => setDecText(e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>Field</span>
-                    <select
-                      aria-label="Field of view"
-                      value={draft.fov}
-                      onChange={(e) =>
-                        setDraft({ ...draft, fov: Number(e.target.value) })
-                      }
-                    >
-                      {[2, 5, 10, 15, 30].map((n) => (
-                        <option key={n} value={n}>
-                          {n}′
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    <span>Band</span>
-                    <select
-                      aria-label="Detector"
-                      value={draft.detector}
-                      onChange={(e) =>
-                        setDraft({ ...draft, detector: Number(e.target.value) })
-                      }
-                    >
-                      <option value={0}>Auto</option>
-                      {DETECTORS.map((d, i) => (
-                        <option key={d} value={i + 1}>
-                          D{i + 1} {d} µm
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={loading}
-                    title="Search the NASA/IPAC archive at this position"
+              <section className="fieldbar" aria-label="Field">
+                <div className="fieldbar-row">
+                  <div
+                    className="fieldbar-picks"
+                    role="group"
+                    aria-label="Challenge targets"
                   >
-                    {loading ? "Loading…" : "Search archive"}
-                  </button>
-                </form>
+                    <span className="fieldbar-label">Targets</span>
+                    {TARGETS.map((t, i) => (
+                      <button
+                        key={t.name}
+                        className={target?.name === t.name ? "selected" : ""}
+                        aria-pressed={target?.name === t.name}
+                        title={`${t.type}. Opens recorded NASA exposures.`}
+                        onClick={() => chooseTarget(i)}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                  <form
+                    className="fieldbar-query"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      submitField();
+                    }}
+                  >
+                    <label>
+                      <span>RA</span>
+                      <input
+                        aria-label="Right ascension, degrees or hours minutes seconds"
+                        title="Right ascension, ICRS. Decimal degrees or 08h55m10.831s"
+                        type="text"
+                        required
+                        value={raText}
+                        onChange={(e) => setRaText(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      <span>Dec</span>
+                      <input
+                        aria-label="Declination, decimal or sexagesimal degrees"
+                        title="Declination, ICRS. Decimal degrees or −07d14m42.53s"
+                        type="text"
+                        required
+                        value={decText}
+                        onChange={(e) => setDecText(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      <select
+                        aria-label="Field of view"
+                        title="Field of view"
+                        value={draft.fov}
+                        onChange={(e) =>
+                          setDraft({ ...draft, fov: Number(e.target.value) })
+                        }
+                      >
+                        {[2, 5, 10, 15, 30].map((n) => (
+                          <option key={n} value={n}>
+                            {n} arcmin
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <select
+                        aria-label="Detector"
+                        title="Detector band"
+                        value={draft.detector}
+                        onChange={(e) =>
+                          setDraft({
+                            ...draft,
+                            detector: Number(e.target.value),
+                          })
+                        }
+                      >
+                        <option value={0}>Auto, longest baseline</option>
+                        {DETECTORS.map((d, i) => (
+                          <option key={d} value={i + 1}>
+                            D{i + 1}, {d} µm
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="submit"
+                      className={page === "observe" ? "btn btn-primary" : "btn"}
+                      disabled={loading}
+                      title="Search the NASA/IPAC archive (DR1 and QR3) at this position"
+                    >
+                      {loading ? "Loading…" : "Search archive"}
+                    </button>
+                  </form>
+                </div>
                 {inputError && (
                   <div className="load-status error" role="alert">
                     {inputError}
                   </div>
                 )}
+                <nav className="fieldbar-tools" aria-label="Field tools">
+                  <div className="seg">
+                    {TOOLS.map(({ id, label }) => (
+                      <button
+                        key={id}
+                        className={page === id ? "selected" : ""}
+                        aria-current={page === id ? "page" : undefined}
+                        onClick={() => navigate(id)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    className="btn-quiet"
+                    onClick={report}
+                    title="Download a JSON report of this field with source provenance"
+                  >
+                    <ArrowDownToLine size={14} /> Export evidence
+                  </button>
+                </nav>
+              </section>
+            )}
+            {researchPage && page !== "observe" && (
+              <div className="page-heading">
+                <h1 className="title-page">{TITLES[page][0]}</h1>
+                <p className="lede">{TITLES[page][1]}</p>
               </div>
             )}
             {candidateContext && page !== "survey" && (
@@ -1274,60 +1326,42 @@ export default function App() {
               </div>
             )}
             {page === "observe" && (
-              <div className="ob-grid">
-                <section className="ob-viewer" aria-label="Blink player">
-                  <div className="ob-viewer-head">
-                    <h2>{fieldName}</h2>
-                    <span className="mono">
-                      {fmt(query.ra, 5)}° {fmt(query.dec, 5)}°
-                    </span>
-                    <span className="ob-source">
-                      {frame
-                        ? search?.status === "recorded-observations"
-                          ? "Recorded NASA data"
-                          : search?.status === "recorded-metadata"
-                            ? "NASA pixels, recorded index"
-                            : search?.status === "partial-live" ||
-                                search?.searchCoverage?.complete === false
-                              ? "NASA pixels, partial search"
-                              : "NASA archive"
-                        : "No data"}
-                    </span>
-                  </div>
-                  <div className="ob-toolbar">
-                    <div className="seg" aria-label="Comparison mode">
-                      {["blink", "difference", "overlay", "split"].map((m) => (
-                        <button
-                          key={m}
-                          className={mode === m ? "selected" : ""}
-                          aria-pressed={mode === m}
-                          onClick={() => {
-                            setMode(m);
-                            setPlaying(false);
-                          }}
-                        >
-                          {m === "blink"
-                            ? "Blink"
-                            : m === "difference"
-                              ? "Difference"
-                              : m === "overlay"
-                                ? "Overlay"
-                                : "Side by side"}
-                        </button>
-                      ))}
+              <>
+                <div className="ob-grid">
+                  <section className="ob-viewer" aria-label="Blink player">
+                    <div className="ob-head">
+                      <h2 className="object-name">{fieldName}</h2>
+                      <span className="ob-coords num">
+                        {fmt(query.ra, 5)}° {fmt(query.dec, 5)}°
+                        <abbr title="International Celestial Reference System">
+                          ICRS
+                        </abbr>
+                      </span>
+                      <div
+                        className="seg"
+                        role="group"
+                        aria-label="Comparison mode"
+                      >
+                        {MODES.map(([m, label, hint]) => (
+                          <button
+                            key={m}
+                            className={mode === m ? "selected" : ""}
+                            aria-pressed={mode === m}
+                            title={hint}
+                            onClick={() => {
+                              setMode(m);
+                              setPlaying(false);
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <select
-                      aria-label="Colour palette"
-                      value={palette}
-                      onChange={(e) => setPalette(e.target.value)}
+                    <div className="ob-bench">
+                    <div
+                      className={`ob-stage${mode === "split" ? " split-view" : ""}`}
                     >
-                      <option value="ice">Ice</option>
-                      <option value="mono">Gray</option>
-                    </select>
-                  </div>
-                  <div
-                    className={`ob-stage ${mode === "split" ? "split-view" : ""}`}
-                  >
                       {mode === "split" && (
                         <div>
                           <SkyCanvas
@@ -1345,11 +1379,15 @@ export default function App() {
                                 : null)
                             }
                             onPoint={setPoint}
+                            caption={
+                              reference && (
+                                <>
+                                  <strong>Reference</strong>
+                                  {plateLabel(reference)}
+                                </>
+                              )
+                            }
                           />
-                          <div className="split-label">
-                            Reference ·{" "}
-                            {reference ? date(reference.metadata.mjd) : "—"}
-                          </div>
                         </div>
                       )}
                       <div>
@@ -1372,372 +1410,525 @@ export default function App() {
                             (candidateContext && frame ? pointFor(frame) : null)
                           }
                           onPoint={setPoint}
+                          caption={
+                            frame && (
+                              <>
+                                {mode === "difference" && comparison.eligible && (
+                                  <strong>Selected minus reference</strong>
+                                )}
+                                {mode === "overlay" && (
+                                  <strong>Blended with reference</strong>
+                                )}
+                                {mode === "split" && <strong>Selected</strong>}
+                                {plateLabel(frame)}
+                              </>
+                            )
+                          }
                         />
-                        {mode === "split" && (
-                          <div className="split-label">
-                            Selected · {frame ? date(frame.metadata.mjd) : "—"}
-                          </div>
-                        )}
                       </div>
-                  </div>
-                  <div className="ob-play">
-                    <button
-                      className="btn btn-icon ob-playbtn"
-                      aria-label={playing ? "Pause blink" : "Play blink"}
-                      title={
-                        mode !== "blink"
-                          ? "Switch to Blink to play"
-                          : playing
-                            ? "Pause"
-                            : "Play"
-                      }
-                      disabled={timeline.length < 2 || mode !== "blink"}
-                      onClick={() => setPlaying(!playing)}
-                    >
-                      {playing ? <Pause size={14} /> : <Play size={14} />}
-                    </button>
-                    <button
-                      className="btn btn-icon"
-                      aria-label="Previous epoch"
-                      disabled={timeline.length < 2}
-                      onClick={() =>
-                        selectEpoch(
-                          (active - 1 + timeline.length) % timeline.length,
-                        )
-                      }
-                    >
-                      <ChevronLeft size={14} />
-                    </button>
-                    <button
-                      className="btn btn-icon"
-                      aria-label="Next epoch"
-                      disabled={timeline.length < 2}
-                      onClick={() => selectEpoch((active + 1) % timeline.length)}
-                    >
-                      <ChevronRight size={14} />
-                    </button>
-                    <input
-                      className="ob-scrub"
-                      aria-label="Observation epoch"
-                      type="range"
-                      min="0"
-                      max={Math.max(0, timeline.length - 1)}
-                      value={active}
-                      disabled={!timeline.length}
-                      aria-valuetext={frame?.metadata.date}
-                      onChange={(e) => selectEpoch(Number(e.target.value))}
-                    />
-                    <span className="ob-epoch mono">
-                      {timeline.length ? active + 1 : 0}/{timeline.length}
-                      <b>{frame ? date(frame.metadata.mjd) : "—"}</b>
-                    </span>
-                    <select
-                      aria-label="Blink speed"
-                      title="Blink speed"
-                      value={speed}
-                      onChange={(e) => setSpeed(Number(e.target.value))}
-                    >
-                      <option value={1400}>0.7 fps</option>
-                      <option value={900}>1.1 fps</option>
-                      <option value={400}>2.5 fps</option>
-                    </select>
-                  </div>
-                  {timeline.length > 1 && (
-                    <div className="ob-epochs" aria-label="Observation dates">
-                      {timeline.map((f, index) => (
-                        <button
-                          key={f.provenance.sourceUrl}
-                          aria-pressed={index === active}
-                          onClick={() => selectEpoch(index)}
-                          title={f.metadata.date + " UTC"}
-                        >
-                          {date(f.metadata.mjd)}
-                          <span>{fmt(f.metadata.wavelengthCenter, 3)} µm</span>
-                        </button>
-                      ))}
                     </div>
-                  )}
-                  {mode === "difference" && (
-                    <p className="ob-note" role="status">
-                      {comparison.eligible
-                        ? `Selected minus reference. ${comparison.reason}`
-                        : `Subtraction unavailable, showing the selected image. ${comparison.reason}`}
-                    </p>
-                  )}
-                  {mode !== "difference" &&
-                    frame &&
-                    reference &&
-                    frame !== reference &&
-                    !comparison.eligible && (
-                      <p className="ob-note">{comparison.reason}</p>
-                    )}
-                </section>
-                <aside className="ob-side">
-                  <section>
-                    <h3>Field</h3>
-                    <dl className="kv">
-                      <div>
-                        <dt>Epochs</dt>
-                        <dd>{frames.length}</dd>
-                      </div>
-                      <div>
-                        <dt>Baseline</dt>
-                        <dd>
-                          {frames.length > 1
-                            ? `${fmt(frames.at(-1)!.metadata.mjd - frames[0].metadata.mjd, 0)} d`
-                            : "—"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Release</dt>
-                        <dd>
-                          {search?.observations.length
-                            ? [
-                                ...new Set(
-                                  search.observations.map((o) =>
-                                    o.collection
-                                      .replace("spherex_", "")
-                                      .toUpperCase(),
-                                  ),
-                                ),
-                              ].join(" + ")
-                            : "DR1 + QR3"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Band</dt>
-                        <dd>
-                          {query.detector
-                            ? `D${query.detector} ${DETECTORS[query.detector - 1]} µm`
-                            : "Auto"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt title="Local wavelength range of the selected exposure">
-                          Wavelength
-                        </dt>
-                        <dd>
-                          {frame
-                            ? `${fmt(frame.metadata.wavelengthMin, 3)}–${fmt(frame.metadata.wavelengthMax, 3)} µm`
-                            : "—"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Valid pixels</dt>
-                        <dd>
-                          {frame
-                            ? `${fmt((1 - frame.metadata.badFraction) * 100, 1)}%`
-                            : "—"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt title="Zodiacal light model">Zodi</dt>
-                        <dd>
-                          {frame
-                            ? frame.metadata.zodiSubtracted
-                              ? "Subtracted"
-                              : "Not subtracted"
-                            : "—"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Pixel scale</dt>
-                        <dd>
-                          {frame ? `${fmt(frame.metadata.pixelArcsec)}″` : "—"}
-                        </dd>
-                      </div>
-                    </dl>
-                  </section>
-                  <section>
-                    <h3>Display</h3>
-                    <div className="ob-controls">
-                      {frames.length > 1 && (
-                        <label className="ob-field">
-                          <span>Reference</span>
-                          <select
-                            aria-label="Reference observation"
-                            value={reference?.provenance.sourceUrl ?? ""}
-                            onChange={(e) => {
-                              setReferenceUrl(e.target.value);
-                              setPlaying(false);
-                            }}
-                          >
-                            {frames.map((f) => (
-                              <option
-                                key={f.provenance.sourceUrl}
-                                value={f.provenance.sourceUrl}
-                              >
-                                {date(f.metadata.mjd)} ·{" "}
+                      <div className="ob-log">
+                        <div className="ob-log-head">
+                          <span>
+                            {timeline.length} exposure
+                            {timeline.length === 1 ? "" : "s"}
+                          </span>
+                          <span className="lamp" data-state={sourceLamp.state}>
+                            {sourceLamp.label}
+                          </span>
+                        </div>
+                        <div
+                          className="ob-epochs"
+                          role="group"
+                          aria-label="Exposures"
+                        >
+                          {timeline.map((f, index) => (
+                            <button
+                              key={f.provenance.sourceUrl}
+                              aria-pressed={index === active}
+                              onClick={() => selectEpoch(index)}
+                              title={f.metadata.date + " UTC"}
+                              style={band(f.metadata.wavelengthCenter)}
+                            >
+                              <span className="num">
+                                {date(f.metadata.mjd)}
+                              </span>
+                              <span className="num">
                                 {fmt(f.metadata.wavelengthCenter, 3)} µm
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
-                      <label className="ob-field">
-                        <span title="Changes visibility, not the data">
-                          Stretch
-                        </span>
-                        <input
-                          aria-label="Display stretch"
-                          type="range"
-                          min=".4"
-                          max="3"
-                          step=".1"
-                          value={contrast}
-                          onChange={(e) => setContrast(Number(e.target.value))}
-                        />
-                      </label>
-                      {mode === "overlay" && (
-                        <label className="ob-field">
-                          <span>Opacity</span>
-                          <input
-                            aria-label="Reference opacity"
-                            type="range"
-                            min="0"
-                            max="1"
-                            step=".05"
-                            value={blend}
-                            onChange={(e) => setBlend(Number(e.target.value))}
-                          />
-                        </label>
-                      )}
-                      {frames.length > 1 && (
-                        <label
-                          className="ob-check"
-                          title="Only step through epochs whose bandpass is close to the reference"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={matchedOnly}
-                            onChange={(e) => {
-                              setMatchedOnly(e.target.checked);
-                              setPlaying(false);
-                            }}
-                          />
-                          Matched bandpass only
-                        </label>
-                      )}
-                      {frame && (
-                        <label
-                          className="ob-check"
-                          title="Highlight pixels excluded by quality flags"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={qualityLayer}
-                            onChange={(e) => setQualityLayer(e.target.checked)}
-                          />
-                          Flagged pixels
-                        </label>
-                      )}
-                      {frame && candidateContext && (
-                        <label className="ob-check">
-                          <input
-                            type="checkbox"
-                            checked={showTrack}
-                            onChange={(e) => setShowTrack(e.target.checked)}
-                          />
-                          Trial path
-                        </label>
-                      )}
+                              </span>
+                              {f === reference && (
+                                <em title="Reference exposure">ref</em>
+                              )}
+                            </button>
+                          ))}
+                          {timeline.length < 2 && (
+                            <p className="caption">
+                              {timeline.length
+                                ? "Two exposures are needed to blink."
+                                : "Pick a target or search a position."}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                    <div className="ob-play">
+                      <button
+                        className="btn ob-playbtn"
+                        aria-label={playing ? "Pause blink" : "Play blink"}
+                        aria-pressed={playing}
+                        title={
+                          mode !== "blink"
+                            ? "Switch to Blink to play"
+                            : timeline.length < 2
+                              ? "Two exposures are needed to blink"
+                              : "Space"
+                        }
+                        disabled={timeline.length < 2 || mode !== "blink"}
+                        onClick={() => setPlaying(!playing)}
+                      >
+                        {playing ? <Pause size={14} /> : <Play size={14} />}
+                        {playing ? "Pause" : "Blink"}
+                      </button>
+                      <button
+                        className="btn btn-icon"
+                        aria-label="Previous exposure"
+                        title="Previous exposure ( [ )"
+                        disabled={timeline.length < 2}
+                        onClick={() => stepEpoch(-1)}
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        className="btn btn-icon"
+                        aria-label="Next exposure"
+                        title="Next exposure ( ] )"
+                        disabled={timeline.length < 2}
+                        onClick={() => stepEpoch(1)}
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                      <div className="ob-scrubber">
+                        <input
+                          className="ob-scrub"
+                          aria-label="Exposure"
+                          type="range"
+                          min="0"
+                          max={Math.max(0, timeline.length - 1)}
+                          value={active}
+                          disabled={!timeline.length}
+                          aria-valuetext={frame?.metadata.date}
+                          onChange={(e) => selectEpoch(Number(e.target.value))}
+                        />
+                        <div className="ob-ticks" aria-hidden="true">
+                          {timeline.map((f) => (
+                            <i
+                              key={f.provenance.sourceUrl}
+                              style={band(f.metadata.wavelengthCenter)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <span className="ob-count num">
+                        {timeline.length ? active + 1 : 0} of {timeline.length}
+                      </span>
+                      <select
+                        aria-label="Blink speed"
+                        title="Time each exposure stays on screen"
+                        value={speed}
+                        onChange={(e) => setSpeed(Number(e.target.value))}
+                      >
+                        <option value={1400}>Slow, 1.4 s</option>
+                        <option value={900}>Normal, 0.9 s</option>
+                        <option value={400}>Fast, 0.4 s</option>
+                      </select>
+                    </div>
+                    {mode === "difference" && (
+                      <p className="note-line" role="status">
+                        {comparison.eligible
+                          ? `Selected minus reference. ${comparison.reason}`
+                          : `Subtraction is unavailable, so the selected image is shown. ${comparison.reason}`}
+                      </p>
+                    )}
+                    {mode !== "difference" &&
+                      frame &&
+                      reference &&
+                      frame !== reference &&
+                      !comparison.eligible && (
+                        <p className="note-line">{comparison.reason}</p>
+                      )}
                   </section>
-                  <section className="ob-actions">
-                    <button
-                      className="btn"
-                      onClick={() => navigate("trace")}
-                      disabled={frames.length < 2}
-                      title="Run the DeepTrace motion search on these epochs"
-                    >
-                      Motion search
-                    </button>
-                    <button className="btn" onClick={() => navigate("spectra")}>
-                      Spectrum
-                    </button>
-                    <button
-                      className="btn"
-                      onClick={() =>
-                        navigate("atlas", {
-                          ...selected,
-                          label: fieldName,
-                          id: candidateContext?.id,
-                        })
-                      }
-                    >
-                      Sky Atlas
-                    </button>
-                    <button
-                      className="btn"
-                      onClick={() => navigate("notebook")}
-                    >
-                      Add note
-                    </button>
-                    <button
-                      className="btn"
-                      onClick={report}
-                      title="Download a JSON evidence report with provenance"
-                    >
-                      Export
-                    </button>
-                  </section>
-                  {frame && (
-                    <details>
-                      <summary>Exposure details</summary>
+                  <aside className="ob-side">
+                    <section>
+                      <h3>Field</h3>
                       <dl className="kv">
                         <div>
-                          <dt>Observed UTC</dt>
-                          <dd>{frame.metadata.date}</dd>
+                          <dt>Exposures loaded</dt>
+                          <dd>{frames.length}</dd>
                         </div>
                         <div>
-                          <dt>Retrieved UTC</dt>
-                          <dd>{frame.provenance.retrievedAt}</dd>
-                        </div>
-                        <div>
-                          <dt>Method</dt>
-                          <dd>{frame.provenance.method}</dd>
-                        </div>
-                        <div>
-                          <dt>Calibration</dt>
+                          <dt>Time baseline</dt>
                           <dd>
-                            {frame.metadata.calibrationVersion ||
-                              "See FITS header"}
+                            {frames.length > 1
+                              ? `${fmt(frames.at(-1)!.metadata.mjd - frames[0].metadata.mjd, 0)} days`
+                              : "—"}
                           </dd>
                         </div>
                         <div>
-                          <dt>Flags</dt>
+                          <dt>Archive release</dt>
                           <dd>
-                            {Array.isArray(frame.metadata.flagsPresent)
-                              ? frame.metadata.flagsPresent.join(", ")
-                              : "See FITS header"}
+                            {search?.observations.length
+                              ? [
+                                  ...new Set(
+                                    search.observations.map((o) =>
+                                      o.collection
+                                        .replace("spherex_", "")
+                                        .toUpperCase(),
+                                    ),
+                                  ),
+                                ].join(" + ")
+                              : "DR1 + QR3"}
                           </dd>
                         </div>
                         <div>
-                          <dt>Masked</dt>
-                          <dd>{fmt(frame.metadata.badFraction * 100, 1)}%</dd>
-                        </div>
-                        <div>
-                          <dt>Processing</dt>
+                          <dt>Detector band</dt>
                           <dd>
-                            {String(
-                              frame.provenance.pipeline ||
-                                "See exported provenance",
+                            {query.detector ? (
+                              <span
+                                className="band"
+                                style={
+                                  {
+                                    "--band": bandColor(query.detector),
+                                  } as CSSProperties
+                                }
+                              >
+                                D{query.detector},{" "}
+                                {DETECTORS[query.detector - 1]} µm
+                              </span>
+                            ) : (
+                              "Automatic"
                             )}
                           </dd>
                         </div>
                         <div>
-                          <dt>SHA-256</dt>
-                          <dd className="checksum">
-                            {String(
-                              frame.provenance.processedSha256 ||
-                                frame.provenance.sha256 ||
-                                "Unavailable",
-                            )}
+                          <dt title="Wavelength range across the selected exposure">
+                            Local wavelength
+                          </dt>
+                          <dd>
+                            {frame
+                              ? `${fmt(frame.metadata.wavelengthMin, 3)}–${fmt(frame.metadata.wavelengthMax, 3)} µm`
+                              : "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Valid pixels</dt>
+                          <dd>
+                            {frame
+                              ? `${fmt((1 - frame.metadata.badFraction) * 100, 1)}%`
+                              : "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Zodiacal light model</dt>
+                          <dd>
+                            {frame
+                              ? frame.metadata.zodiSubtracted
+                                ? "Subtracted"
+                                : "Not subtracted"
+                              : "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Output pixel scale</dt>
+                          <dd>
+                            {frame
+                              ? `${fmt(frame.metadata.pixelArcsec)}″`
+                              : "—"}
                           </dd>
                         </div>
                       </dl>
+                    </section>
+                    <section>
+                      <h3>Display</h3>
+                      <div className="ob-controls">
+                        {frames.length > 1 && (
+                          <label className="ob-field">
+                            <span>Reference</span>
+                            <select
+                              aria-label="Reference exposure"
+                              value={reference?.provenance.sourceUrl ?? ""}
+                              onChange={(e) => {
+                                setReferenceUrl(e.target.value);
+                                setPlaying(false);
+                              }}
+                            >
+                              {frames.map((f) => (
+                                <option
+                                  key={f.provenance.sourceUrl}
+                                  value={f.provenance.sourceUrl}
+                                >
+                                  {date(f.metadata.mjd)},{" "}
+                                  {fmt(f.metadata.wavelengthCenter, 3)} µm
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                        <label className="ob-field">
+                          <span>Rendering</span>
+                          <select
+                            aria-label="Image rendering"
+                            value={palette}
+                            onChange={(e) => setPalette(e.target.value)}
+                          >
+                            <option value="mono">Plate, light on dark</option>
+                            <option value="negative">
+                              Negative, dark on light
+                            </option>
+                            <option value="ice">Infrared ice, blue</option>
+                          </select>
+                        </label>
+                        <label className="ob-field">
+                          <span title="Changes visibility, not the data">
+                            Stretch
+                          </span>
+                          <input
+                            aria-label="Display stretch"
+                            type="range"
+                            min=".4"
+                            max="3"
+                            step=".1"
+                            value={contrast}
+                            onChange={(e) => setContrast(Number(e.target.value))}
+                          />
+                        </label>
+                        {mode === "overlay" && (
+                          <label className="ob-field">
+                            <span>Opacity</span>
+                            <input
+                              aria-label="Reference opacity"
+                              type="range"
+                              min="0"
+                              max="1"
+                              step=".05"
+                              value={blend}
+                              onChange={(e) => setBlend(Number(e.target.value))}
+                            />
+                          </label>
+                        )}
+                        {frames.length > 1 && (
+                          <label className="ob-check">
+                            <input
+                              type="checkbox"
+                              checked={matchedOnly}
+                              onChange={(e) => {
+                                setMatchedOnly(e.target.checked);
+                                setPlaying(false);
+                              }}
+                            />
+                            Near-bandpass exposures only
+                          </label>
+                        )}
+                        {frame && (
+                          <label className="ob-check">
+                            <input
+                              type="checkbox"
+                              checked={qualityLayer}
+                              onChange={(e) => setQualityLayer(e.target.checked)}
+                            />
+                            Highlight excluded flags
+                          </label>
+                        )}
+                        {frame && candidateContext && (
+                          <label className="ob-check">
+                            <input
+                              type="checkbox"
+                              checked={showTrack}
+                              onChange={(e) => setShowTrack(e.target.checked)}
+                            />
+                            Show modeled trial path
+                          </label>
+                        )}
+                        <p className="caption">
+                          Aligned to the sky grid, north up, east left. Every
+                          exposure shares one stretch. Space starts and stops
+                          the blink; [ and ] step through exposures.
+                        </p>
+                      </div>
+                    </section>
+                    <section>
+                      <h3>Investigate</h3>
+                      <p>
+                        Selected position {fmt(selected.ra, 5)}°,{" "}
+                        {fmt(selected.dec, 5)}°.{" "}
+                        {point
+                          ? "Use the arrow keys on the plate to move it."
+                          : "Click a source on the plate to select it."}
+                      </p>
+                      <div className="ob-actions" style={{ marginTop: 12 }}>
+                        <button
+                          className="btn"
+                          onClick={() => navigate("trace")}
+                          disabled={frames.length < 2}
+                          title="Run the DeepTrace motion search on these exposures"
+                        >
+                          Search for motion
+                        </button>
+                        <button
+                          className="btn"
+                          onClick={() => navigate("spectra")}
+                        >
+                          Measure its spectrum
+                        </button>
+                        <button
+                          className="btn"
+                          onClick={() =>
+                            navigate("atlas", {
+                              ...selected,
+                              label: fieldName,
+                              id: candidateContext?.id,
+                            })
+                          }
+                        >
+                          Show in Sky Atlas
+                        </button>
+                        <button
+                          className="btn"
+                          onClick={() => navigate("notebook")}
+                        >
+                          Record a note
+                        </button>
+                      </div>
+                    </section>
+                    <section className="ob-about">
+                      <h3>About this field</h3>
+                      <p className="object-kind">
+                        {target?.type || "Custom sky position"}
+                      </p>
+                      <p>
+                        {target?.note ||
+                          "Select a point in an exposure to inspect its infrared measurements or record something worth following up."}
+                      </p>
+                    </section>
+                    {frame && (
+                      <details>
+                        <summary>Selected exposure details</summary>
+                        <dl className="kv">
+                          <div>
+                            <dt>Observed, UTC</dt>
+                            <dd>{frame.metadata.date}</dd>
+                          </div>
+                          <div>
+                            <dt>Retrieved, UTC</dt>
+                            <dd>{frame.provenance.retrievedAt}</dd>
+                          </div>
+                          <div>
+                            <dt>Retrieval method</dt>
+                            <dd>{frame.provenance.method}</dd>
+                          </div>
+                          <div>
+                            <dt>Calibration</dt>
+                            <dd>
+                              {frame.metadata.calibrationVersion ||
+                                "See FITS header"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Flags present</dt>
+                            <dd>
+                              {Array.isArray(frame.metadata.flagsPresent)
+                                ? frame.metadata.flagsPresent.join(", ")
+                                : "See FITS header"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Masked pixels</dt>
+                            <dd>{fmt(frame.metadata.badFraction * 100, 1)}%</dd>
+                          </div>
+                          <div>
+                            <dt>Processing</dt>
+                            <dd>
+                              {String(
+                                frame.provenance.pipeline ||
+                                  "See exported provenance",
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>SHA-256</dt>
+                            <dd className="checksum">
+                              {String(
+                                frame.provenance.processedSha256 ||
+                                  frame.provenance.sha256 ||
+                                  "Unavailable",
+                              )}
+                            </dd>
+                          </div>
+                        </dl>
+                        <a
+                          className="inline-link"
+                          href={frame.provenance.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Original FITS file
+                        </a>
+                      </details>
+                    )}
+                    <AladinPanel
+                      ra={query.ra}
+                      dec={query.dec}
+                      fovArcmin={query.fov}
+                    />
+                    <details className="archive-tools">
+                      <summary>Coordinate formats and FITS fallback</summary>
+                      <p>
+                        Enter ICRS decimal degrees or use sexagesimal
+                        coordinates such as <code>08h55m10.831s</code> and{" "}
+                        <code>−07d14m42.53s</code>. If archive search is
+                        unavailable, you can still request cutouts from specific
+                        exposure files.
+                      </p>
+                      <label>
+                        Official DR1 or QR3 FITS file URLs, one per line
+                        <textarea
+                          rows={3}
+                          value={fitsText}
+                          onChange={(e) => setFitsText(e.target.value)}
+                        />
+                      </label>
+                      <button
+                        className="btn"
+                        disabled={loading || !fitsText.trim()}
+                        onClick={() => {
+                          try {
+                            submitField({
+                              kind: "fits",
+                              urls: archiveFitsUrls(fitsText),
+                              label:
+                                "User-specified NASA FITS files. No archive metadata search was used.",
+                            });
+                          } catch (error) {
+                            setInputError((error as Error).message);
+                          }
+                        }}
+                      >
+                        Load specified exposures
+                      </button>
+                    </details>
+                  </aside>
+                </div>
+                <div className="ob-below">
+                  <section>
+                    <h3 className="title-module">Traceable by design</h3>
+                    <p>
+                      These are telescope measurements, with flagged pixels
+                      excluded. Display stretch changes visibility, not the
+                      underlying data. Differences can reflect wavelength,
+                      calibration, or artifacts as well as real change.
+                    </p>
+                    {frame && (
                       <a
-                        className="ob-link"
+                        className="source-file"
                         href={
                           frame.provenance.cutoutUrl ||
                           frame.provenance.sourceUrl
@@ -1745,67 +1936,27 @@ export default function App() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        {frame.metadata.id} (FITS)
+                        <span className="code">{frame.metadata.id}</span>
+                        <span>Open the original NASA FITS data</span>
                       </a>
-                    </details>
-                  )}
-                  <AladinPanel
-                    ra={query.ra}
-                    dec={query.dec}
-                    fovArcmin={query.fov}
-                  />
-                  <details>
-                    <summary>About this field</summary>
+                    )}
+                  </section>
+                  <section>
+                    <h3 className="title-module">Notice something?</h3>
                     <p>
-                      {target
-                        ? `${target.type}. ${target.note}`
-                        : "Custom position. Click a source in the image to select it for spectra or notes."}
-                    </p>
-                    <p>
-                      Images are WCS aligned, north up, on a shared stretch.
-                      Flagged pixels are excluded. Differences between epochs
-                      can come from wavelength, calibration, or artifacts as
-                      well as real change. An unusual signal is a question, not
+                      Click a source in the image, compare exposures, then
+                      record what you see. An unusual signal is a question, not
                       a discovery.
                     </p>
-                  </details>
-                  <details className="archive-tools">
-                    <summary>Coordinate formats and FITS URLs</summary>
-                    <p>
-                      ICRS decimal degrees, or sexagesimal such as{" "}
-                      <code>08h55m10.831s</code> <code>−07d14m42.53s</code>. If
-                      archive search is down, load cutouts from specific
-                      exposure files.
-                    </p>
-                <label className="stacked-label">
-                  Official DR1 or QR3 FITS file URLs, one per line
-                  <textarea
-                    rows={3}
-                    value={fitsText}
-                    onChange={(e) => setFitsText(e.target.value)}
-                  />
-                </label>
-                <button
-                  className="secondary"
-                  disabled={loading || !fitsText.trim()}
-                  onClick={() => {
-                    try {
-                      submitField({
-                        kind: "fits",
-                        urls: archiveFitsUrls(fitsText),
-                        label:
-                          "User-specified NASA FITS files. No archive metadata search was used.",
-                      });
-                    } catch (error) {
-                      setInputError((error as Error).message);
-                    }
-                  }}
-                >
-                  Load specified exposures
-                </button>
-                  </details>
-                </aside>
-              </div>
+                    <button
+                      className="btn"
+                      onClick={() => navigate("notebook")}
+                    >
+                      Record an observation
+                    </button>
+                  </section>
+                </div>
+              </>
             )}
             {page === "atlas" && (
               <Suspense
@@ -2356,33 +2507,27 @@ export default function App() {
                   ))}
                 </details>
               )}
-            <footer className="page-footer">
-              {page === "home" ? (
-                <>
-                  <span>
-                    <span className="signal-dot" /> REAL DATA. OPEN QUESTIONS.
-                  </span>
-                  <span>
-                    NASA/IPAC IRSA · SPHEREx · Independent Space Apps project
-                  </span>
-                </>
-              ) : (
-                <span>Data: NASA/IPAC IRSA, SPHEREx DR1 and QR3</span>
-              )}
-              <a
-                href="https://irsa.ipac.caltech.edu/Missions/spherex.html"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {page === "home" ? (
-                  <>Explore the mission <ArrowUpRight size={12} /></>
-                ) : (
-                  "irsa.ipac.caltech.edu"
-                )}
-              </a>
-            </footer>
-          </main>
-        </div>
+        </main>
+        <footer className="colophon">
+          <span>
+            Data from{" "}
+            <a
+              href="https://irsa.ipac.caltech.edu/Missions/spherex.html"
+              target="_blank"
+              rel="noreferrer"
+            >
+              NASA/IPAC IRSA
+            </a>
+            , SPHEREx DR1 and QR3. An independent Space Apps project, not
+            endorsed by NASA.
+          </span>
+          <nav aria-label="About">
+            <button onClick={() => go("methods")}>Methods and limits</button>
+            <a href="/images/CREDITS.md" target="_blank" rel="noreferrer">
+              Image credits
+            </a>
+          </nav>
+        </footer>
       </div>
     </Tooltip.Provider>
   );

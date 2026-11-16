@@ -1,0 +1,415 @@
+/* Observe: the blink player on the left, one readout column on the right. */
+.ob-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 328px;
+  align-items: start;
+  gap: var(--s-6);
+}
+.ob-viewer {
+  min-width: 0;
+}
+.ob-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+  margin-bottom: var(--s-2);
+}
+.ob-head h2 {
+  font-size: var(--fs-24);
+  line-height: 1.15;
+}
+.ob-coords {
+  color: var(--text-2);
+  font-size: var(--fs-13);
+}
+.ob-coords abbr {
+  margin-left: 6px;
+  color: var(--text-3);
+  text-decoration: none;
+}
+.ob-head .seg {
+  margin-left: auto;
+}
+
+/* Bench: the plate, with the exposure log beside it. */
+.ob-bench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 224px;
+  gap: var(--s-2);
+}
+.ob-stage .sky-canvas,
+.ob-log {
+  height: clamp(380px, calc(100dvh - 276px), 920px);
+}
+.ob-log {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-key);
+  background: var(--well);
+}
+.ob-log-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px var(--s-2);
+  min-height: 34px;
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-3);
+  border-bottom: 1px solid var(--rule);
+  color: var(--text-2);
+  font-size: var(--fs-12);
+}
+.ob-epochs {
+  display: grid;
+  align-content: start;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+.ob-epochs button {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 32px;
+  padding: 0 var(--s-2) 0 9px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-left: 3px solid var(--band, var(--text-3));
+  background: none;
+  color: var(--text-2);
+  font-size: var(--fs-12);
+  text-align: left;
+  transition: background-color var(--fast);
+}
+.ob-epochs button > span:first-child {
+  font-size: var(--fs-13);
+}
+.ob-epochs button:hover {
+  background: var(--key);
+  color: var(--text);
+}
+.ob-epochs button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--on-text);
+}
+.ob-epochs em {
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-key);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 15px;
+  opacity: 0.8;
+}
+.ob-epochs .caption {
+  padding: var(--s-3);
+}
+
+/* Transport */
+.ob-play {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+.ob-play .btn {
+  min-height: 34px;
+}
+.ob-play .btn-icon {
+  width: 34px;
+}
+.ob-playbtn {
+  min-width: 96px;
+  font-weight: 700;
+}
+.ob-playbtn[aria-pressed="true"] {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--on-text);
+}
+.ob-scrubber {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.ob-scrub {
+  width: 100%;
+}
+.ob-ticks {
+  display: flex;
+  justify-content: space-between;
+  height: 6px;
+  margin-top: -1px;
+  padding: 0 3px;
+  pointer-events: none;
+}
+.ob-ticks i {
+  width: 2px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--band, var(--text-3));
+}
+.ob-count {
+  min-width: 44px;
+  color: var(--text-2);
+  font-size: var(--fs-13);
+  text-align: right;
+  white-space: nowrap;
+}
+.ob-viewer .note-line {
+  margin-top: var(--s-3);
+}
+
+/* Readout column */
+.ob-side {
+  display: grid;
+  min-width: 0;
+  font-size: var(--fs-13);
+}
+.ob-side > section,
+.ob-side > details {
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--rule);
+}
+.ob-side > :first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.ob-side h3 {
+  margin-bottom: var(--s-2);
+  font-size: var(--fs-14);
+  font-weight: 700;
+}
+.ob-side p {
+  max-width: 60ch;
+  color: var(--text-2);
+}
+.ob-side p + p,
+.ob-side p + .inline-link,
+.ob-side .kv + .inline-link {
+  margin-top: var(--s-2);
+}
+.ob-controls {
+  display: grid;
+  gap: 10px;
+}
+.ob-field {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-2);
+}
+.ob-field select,
+.ob-field input {
+  width: 100%;
+}
+.ob-check {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.ob-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.ob-side summary {
+  color: var(--text-2);
+  transition: color var(--fast);
+}
+.ob-side summary:hover,
+.ob-side details[open] > summary {
+  color: var(--text);
+}
+.ob-side details[open] > summary {
+  margin-bottom: var(--s-3);
+}
+.ob-side details label {
+  display: grid;
+  gap: 6px;
+  margin: var(--s-3) 0;
+  color: var(--text-2);
+}
+.ob-side textarea {
+  width: 100%;
+}
+.ob-side code {
+  color: var(--text);
+}
+.ob-about .object-kind {
+  margin-bottom: var(--s-1);
+  color: var(--text);
+}
+
+/* Below the player: what the pixels are, and what to do with a hunch. */
+.ob-below {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-6) var(--s-12);
+  margin-top: var(--s-8);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--rule);
+}
+.ob-below p {
+  max-width: 64ch;
+  margin: var(--s-2) 0 var(--s-3);
+  color: var(--text-2);
+}
+.source-file {
+  display: inline-grid;
+  gap: 2px;
+  max-width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-key);
+  background: var(--well);
+  text-decoration: none;
+  transition: border-color var(--fast);
+}
+.source-file:hover {
+  border-color: var(--text-3);
+}
+.source-file span:last-child {
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+
+/* Archive coverage and detector choices */
+.archive-recovery {
+  margin-bottom: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--caution);
+  border-radius: var(--r-key);
+  background: var(--well);
+  font-size: var(--fs-13);
+}
+.archive-recovery-message {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-2);
+}
+.archive-recovery-message > svg {
+  display: none;
+}
+.archive-recovery-message > span {
+  flex: 1;
+  min-width: 200px;
+}
+.archive-recovery-message strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.archive-recovery details {
+  margin-top: var(--s-2);
+  color: var(--text-2);
+}
+.detector-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-2) 0;
+}
+.detector-options button {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  height: auto;
+  padding: var(--s-2) var(--s-3);
+  text-align: left;
+}
+.detector-options button span {
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+
+/* Sky context (Aladin Lite) */
+.sky-context-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  margin-bottom: var(--s-2);
+}
+.sky-context-view {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--rule-strong);
+  background: var(--field);
+}
+.sky-context-view > .caption {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+}
+
+@media (max-width: 1240px) {
+  .ob-bench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ob-log {
+    height: auto;
+  }
+  .ob-epochs {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .ob-epochs button {
+    flex: none;
+    grid-template-columns: auto;
+    gap: 0;
+    min-height: 0;
+    padding: 5px 12px 5px 9px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 0;
+  }
+  .ob-epochs em {
+    justify-self: start;
+    margin-top: 2px;
+  }
+}
+@media (max-width: 980px) {
+  .ob-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ob-stage .sky-canvas {
+    height: min(calc(100vw - 2 * var(--gutter) + 36px), 640px);
+  }
+  .ob-below {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .ob-head .seg {
+    width: 100%;
+    margin-left: 0;
+  }
+  .ob-head .seg button {
+    flex: 1;
+    padding: 0 4px;
+  }
+  .ob-play {
+    flex-wrap: wrap;
+  }
+  .ob-scrubber {
+    order: 5;
+    flex: 1 1 140px;
+  }
+  .ob-play select {
+    order: 6;
+  }
+  .ob-count {
+    margin-left: auto;
+  }
+}

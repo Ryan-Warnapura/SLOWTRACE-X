@@ -1,0 +1,351 @@
+/* App frame: masthead, page frame, field bar, footer. */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-8);
+  height: var(--header-h);
+  padding: 0 var(--gutter);
+  border-bottom: 1px solid var(--rule);
+  background: var(--graphite);
+}
+.masthead-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: var(--fs-14);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.masthead-brand svg {
+  width: 20px;
+  height: 20px;
+}
+.masthead-nav {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-1);
+}
+.masthead-nav button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: var(--fs-13);
+  white-space: nowrap;
+  transition: color var(--fast);
+}
+.masthead-nav button:hover {
+  color: var(--text);
+}
+.masthead-nav > button.active,
+.masthead-more > button.active {
+  color: var(--text);
+}
+.masthead-nav > button.active::after,
+.masthead-more > button.active::after {
+  content: "";
+  position: absolute;
+  right: var(--s-3);
+  bottom: -1px;
+  left: var(--s-3);
+  height: 2px;
+  background: var(--text);
+}
+.masthead-more {
+  position: relative;
+  display: flex;
+}
+.masthead-more-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  min-width: 200px;
+  padding: var(--s-1);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-well);
+  background: var(--key);
+}
+.masthead-more-menu.open {
+  display: grid;
+}
+.masthead-more-menu button {
+  min-height: 32px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-key);
+  justify-content: flex-start;
+}
+.masthead-more-menu button:hover {
+  background: var(--key-hover);
+}
+.masthead-more-menu button.active {
+  color: var(--text);
+  font-weight: 700;
+}
+.masthead-menu {
+  display: none;
+  align-self: center;
+  margin-left: auto;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: var(--s-4) var(--gutter) var(--s-8);
+}
+main.view-home {
+  max-width: none;
+  padding: 0;
+}
+
+.page-heading {
+  display: grid;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 var(--s-6);
+}
+
+/* Field bar: target picks, position entry, and the tools that share a field. */
+.fieldbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--rule);
+}
+.fieldbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-4);
+  min-width: 0;
+}
+.fieldbar-picks {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-width: 0;
+}
+.fieldbar-label {
+  margin-right: var(--s-2);
+  color: var(--text-3);
+  font-size: var(--fs-12);
+  white-space: nowrap;
+}
+.fieldbar-picks button {
+  flex: none;
+  min-height: var(--control-h);
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: var(--r-key);
+  background: none;
+  color: var(--text-2);
+  font-family: var(--display);
+  font-size: var(--fs-16);
+  font-style: italic;
+  white-space: nowrap;
+  transition:
+    background-color var(--fast),
+    color var(--fast);
+}
+.fieldbar-picks button:hover {
+  background: var(--key);
+  color: var(--text);
+}
+.fieldbar-picks button.selected {
+  border-color: var(--rule-strong);
+  background: var(--key);
+  color: var(--text);
+}
+.fieldbar-query {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.fieldbar-query label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-3);
+  font-size: var(--fs-12);
+  white-space: nowrap;
+}
+.fieldbar-query input {
+  width: 104px;
+}
+.fieldbar .load-status {
+  margin: 0;
+}
+.fieldbar-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.fieldbar-tools .seg {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fieldbar-tools .seg button {
+  flex: none;
+}
+.fieldbar-tools .seg button {
+  min-height: 26px;
+  padding: 0 var(--s-3);
+}
+
+.colophon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-6);
+  width: 100%;
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: var(--s-4) var(--gutter) var(--s-6);
+  border-top: 1px solid var(--rule);
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.colophon nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+}
+.colophon button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 3px;
+}
+.colophon a:hover,
+.colophon button:hover {
+  color: var(--text);
+}
+
+@media (max-width: 1180px) {
+  .fieldbar-query {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  .masthead {
+    gap: var(--s-2);
+  }
+  .masthead-menu {
+    display: inline-flex;
+  }
+  .masthead-nav {
+    display: none;
+    position: absolute;
+    top: var(--header-h);
+    right: 0;
+    left: 0;
+    flex-direction: column;
+    gap: 0;
+    max-height: calc(100dvh - var(--header-h));
+    padding: var(--s-2) var(--gutter) var(--s-4);
+    overflow-y: auto;
+    border-bottom: 1px solid var(--rule-strong);
+    background: var(--graphite);
+  }
+  .masthead-nav.open {
+    display: flex;
+  }
+  .masthead-nav button {
+    min-height: 40px;
+    padding: 0;
+    font-size: var(--fs-14);
+    justify-content: flex-start;
+  }
+  .masthead-nav > button.active::after,
+  .masthead-more > button.active::after {
+    display: none;
+  }
+  .masthead-nav > button.active {
+    font-weight: 700;
+  }
+  .masthead-more {
+    flex-direction: column;
+    margin-top: var(--s-2);
+    padding-top: var(--s-2);
+    border-top: 1px solid var(--rule);
+  }
+  .masthead-more > button {
+    display: none;
+  }
+  .masthead-more-menu {
+    display: grid;
+    position: static;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .masthead-more-menu button {
+    min-height: 40px;
+    padding: 0;
+  }
+  .fieldbar-picks {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .fieldbar-query {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .fieldbar-query label {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    min-width: 0;
+  }
+  .fieldbar-query input,
+  .fieldbar-query select {
+    width: 100%;
+    height: 34px;
+  }
+  .fieldbar-query .btn {
+    grid-column: 1 / -1;
+    min-height: 36px;
+  }
+  .fieldbar-tools .seg {
+    flex: 1;
+  }
+  .fieldbar-tools .btn-quiet {
+    flex: none;
+    width: var(--control-h);
+    padding: 0;
+    overflow: hidden;
+    justify-content: center;
+    gap: 0;
+    font-size: 0;
+  }
+}

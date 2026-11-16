@@ -196,7 +196,7 @@ export function renderPixels(
     typeof frame.metadata.maskBits === "number" ? frame.metadata.maskBits : 0;
   for (let i = 0; i < values.length; i++) {
     const v = values[i];
-    let c = [9, 14, 17];
+    let c = palette === "negative" && !difference ? [150, 150, 150] : [9, 14, 17];
     if (v !== null) {
       let t = Math.max(0, Math.min(1, (v - lo) / (hi - lo || 1)));
       t = difference ? t : Math.asinh(t * 12 * contrast) / Math.asinh(12);
@@ -208,6 +208,9 @@ export function renderPixels(
             : [35 + 35 * d, 38 + 150 * d, 42 + 210 * d];
       } else if (palette === "mono") {
         c = [t * 255, t * 255, t * 255];
+      } else if (palette === "negative") {
+        // Dark sources on a light field, as on a photographic plate.
+        c = [255 - t * 255, 255 - t * 255, 255 - t * 255];
       } else {
         c = [
           10 + 225 * Math.pow(t, 1.3),

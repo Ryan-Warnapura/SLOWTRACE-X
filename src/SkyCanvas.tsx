@@ -58,6 +58,7 @@ export default function SkyCanvas({
   }, [frame, reference, mode, contrast, palette, scale, quality]);
   return (
     <div className="sky-canvas" ref={holder}>
+      <div className="plate-field">
       {frame ? (
         <div className="image-plane" style={{ transform: `scale(${zoom})` }}>
           <canvas
@@ -122,6 +123,7 @@ export default function SkyCanvas({
               aria-hidden="true"
             />
           )}
+          <PlateTicks frame={frame} />
           {track && track.length > 1 && (
             <svg
               className="image-track"
@@ -131,7 +133,7 @@ export default function SkyCanvas({
               <polyline
                 points={track.map((p) => `${p.x + 0.5},${p.y + 0.5}`).join(" ")}
                 fill="none"
-                stroke="#a5efff"
+                stroke="#efede6"
                 strokeWidth=".4"
                 strokeDasharray="1 1"
               />
@@ -141,9 +143,9 @@ export default function SkyCanvas({
                   cx={p.x + 0.5}
                   cy={p.y + 0.5}
                   r="1.3"
-                  stroke="#98f1ff"
+                  stroke="#efede6"
                   strokeWidth=".34"
-                  fill="#16315f"
+                  fill="#000"
                 />
               ))}
             </svg>
@@ -160,20 +162,18 @@ export default function SkyCanvas({
         </div>
       ) : (
         <div className="empty-sky">
-          <div className="reticle">
-            <Crosshair size={34} />
-          </div>
-          <p>Your window into the infrared.</p>
-          <span>Load a field to see actual SPHEREx observations.</span>
+          <p>No exposure loaded</p>
+          <span>Pick a target or search a position to load SPHEREx exposures.</span>
         </div>
       )}
-      <div className="canvas-grid" aria-hidden="true" />
       <div className="compass" aria-label="North up, east left">
         <span>N</span>
         <i />
         <b>E</b>
       </div>
-      <div className="canvas-caption">
+      </div>
+      <div className="plate-strip">
+      <div className="plate-label">
         {frame && caption
           ? caption
           : frame
@@ -183,6 +183,7 @@ export default function SkyCanvas({
                 ? "Blended exposures"
                 : "SPHEREx exposure"
             : "No exposure loaded"}
+        {frame && <span className="plate-scale">{tickLabel(frame)}</span>}
       </div>
       <div className="canvas-tools">
         <button
@@ -210,6 +211,56 @@ export default function SkyCanvas({
           <Expand size={16} />
         </button>
       </div>
+      </div>
     </div>
+  );
+}
+
+/** Field size in arcminutes along each axis, from the output pixel scale. */
+function fieldArcmin(frame: Frame) {
+  const scale = frame.metadata.pixelArcsec / 60;
+  return { x: frame.width * scale, y: frame.height * scale };
+}
+function tickStep(arcmin: number) {
+  return arcmin > 20 ? 5 : 1;
+}
+function tickLabel(frame: Frame) {
+  const { x } = fieldArcmin(frame);
+  return Number.isFinite(x) && x > 0 ? `Ticks every ${tickStep(x)}′` : "";
+}
+/** Arcminute ticks around the plate edge, measured from the field centre. */
+function PlateTicks({ frame }: { frame: Frame }) {
+  const size = fieldArcmin(frame);
+  if (!(size.x > 0) || !(size.y > 0)) return null;
+  const marks = (arcmin: number) => {
+    const step = tickStep(arcmin);
+    const out: { at: number; length: number }[] = [];
+    for (let k = 0; k <= arcmin / 2; k += step) {
+      const length = k === 0 ? 3.2 : 1.6;
+      out.push({ at: 50 + (k / arcmin) * 100, length });
+      if (k) out.push({ at: 50 - (k / arcmin) * 100, length });
+    }
+    return out;
+  };
+  return (
+    <svg
+      className="plate-ticks"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {marks(size.x).map(({ at, length }) => (
+        <g key={`x${at}`}>
+          <line x1={at} y1={0} x2={at} y2={length} />
+          <line x1={at} y1={100} x2={at} y2={100 - length} />
+        </g>
+      ))}
+      {marks(size.y).map(({ at, length }) => (
+        <g key={`y${at}`}>
+          <line x1={0} y1={at} x2={length} y2={at} />
+          <line x1={100} y1={at} x2={100 - length} y2={at} />
+        </g>
+      ))}
+    </svg>
   );
 }
