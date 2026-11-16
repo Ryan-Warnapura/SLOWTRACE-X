@@ -15,6 +15,8 @@ export interface Observation {
   startMjd?: number;
   endMjd?: number;
   footprint?: unknown;
+  metadataSource?: string;
+  metadataRetrievedAt?: string;
 }
 export interface SearchResult {
   query: Query;
@@ -24,10 +26,15 @@ export interface SearchResult {
   queriedAt: string;
   source: string;
   status:
-    "live" | "partial-live" | "recorded-metadata" | "recorded-observations";
+    | "live"
+    | "partial-live"
+    | "recorded-metadata"
+    | "recorded-observations"
+    | "specified-observations";
   warnings: string[];
   queryUrls: string[];
   archiveChecked?: string;
+  searchCoverage?: Record<string, unknown>;
 }
 export interface Frame {
   width: number;
@@ -46,6 +53,7 @@ export interface Frame {
     center: { ra: number; dec: number } | number[];
     wavelengthMin: number | null;
     wavelengthMax: number | null;
+    wavelengthCenter?: number | null;
     badFraction: number;
     saturatedFraction?: number;
     zodiSubtracted: boolean;

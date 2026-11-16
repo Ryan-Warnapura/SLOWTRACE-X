@@ -72,6 +72,42 @@ export function pixelSky(x: number, y: number, w: number, h: number, q: Query) {
       ) / rad,
   };
 }
+export function skyPixel(
+  ra: number,
+  dec: number,
+  width: number,
+  height: number,
+  query: Query,
+) {
+  const radians = Math.PI / 180;
+  const delta = (ra - query.ra) * radians;
+  const latitude = dec * radians;
+  const center = query.dec * radians;
+  const denominator =
+    Math.sin(center) * Math.sin(latitude) +
+    Math.cos(center) * Math.cos(latitude) * Math.cos(delta);
+  if (denominator <= 0) return null;
+  const x =
+    (width - 1) / 2 -
+    (((Math.cos(latitude) * Math.sin(delta)) / denominator / radians) *
+      60 *
+      width) /
+      query.fov;
+  const y =
+    (height - 1) / 2 -
+    (((Math.cos(center) * Math.sin(latitude) -
+      Math.sin(center) * Math.cos(latitude) * Math.cos(delta)) /
+      denominator /
+      radians) *
+      60 *
+      height) /
+      query.fov;
+  if (x < -0.5 || y < -0.5 || x > width - 0.5 || y > height - 0.5) return null;
+  return {
+    x: Math.max(0, Math.min(width - 1, Math.round(x))),
+    y: Math.max(0, Math.min(height - 1, Math.round(y))),
+  };
+}
 export function aperture(frame: Frame, x: number, y: number) {
   const { width: w, height: h, data, variance, wavelength } = frame;
   let sum = 0,
@@ -104,13 +140,14 @@ export function aperture(frame: Frame, x: number, y: number) {
     mjd: frame.metadata.mjd,
     date: date(frame.metadata.mjd),
     wavelength: quantile(waves, 0.5) || null,
-    value: n ? sum / n - bg : null,
-    error: n
-      ? Math.sqrt(
-          v / (n * n) +
-            (Math.PI * scatter * scatter) / (2 * Math.max(1, sky.length)),
-        )
-      : null,
+    value: n >= 7 && sky.length >= 20 ? sum / n - bg : null,
+    error:
+      n >= 7 && sky.length >= 20
+        ? Math.sqrt(
+            v / (n * n) +
+              (Math.PI * scatter * scatter) / (2 * Math.max(1, sky.length)),
+          )
+        : null,
     n,
     background: bg,
     source: frame.metadata.id,

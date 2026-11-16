@@ -26,7 +26,9 @@ def main():
     arrays = np.array([np.array(f["data"], float).reshape(size, size) for f in frames])
     variance = np.array([np.array(f["variance"], float).reshape(size, size) for f in frames])
     flags = np.array([np.array(f["mask"], int).reshape(size, size) for f in frames])
-    bad = ~np.isfinite(arrays) | ((flags & MASK_BITS) != 0)
+    # Recorded image packets retain the quality policy executed at capture time.
+    mask_bits = np.array([f["metadata"].get("maskBits", MASK_BITS) for f in frames])[:, None, None]
+    bad = ~np.isfinite(arrays) | ((flags & mask_bits) != 0)
     metadata = [f["metadata"] for f in frames]
     science_args = (arrays, variance, bad, np.array([m["mjd"] for m in metadata]))
     kwargs = dict(pixel_arcsec=metadata[0]["pixelArcsec"], wavelengths_um=np.array([m["wavelengthCenter"] for m in metadata]),

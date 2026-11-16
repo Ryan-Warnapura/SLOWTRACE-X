@@ -1,0 +1,42 @@
+{
+  "testedAt": "2026-11-16T02:08:51.759186+00:00",
+  "ceresEphemerisControl": {
+    "status": "ok",
+    "name": "1 Ceres (A801 AA)",
+    "horizonsName": "1 Ceres (A801 AA)",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%271%3B%27&CENTER=%27500%40399%27&EPHEM_TYPE=%27OBSERVER%27&TLIST_TYPE=%27JD%27&TIME_TYPE=%27UT%27&TLIST=%272460914.7131964550%27&QUANTITIES=%271%2C20%27&CAL_FORMAT=%27JD%27&ANG_FORMAT=%27DEG%27&CSV_FORMAT=%27YES%27&RANGE_UNITS=%27AU%27&EXTRA_PREC=%27YES%27&REF_SYSTEM=%27ICRF%27",
+    "samples": [
+      {
+        "mjd": 60914.213196455,
+        "ra": 20.005669784,
+        "dec": -7.077190951,
+        "geocentricRangeAu": 2.1417105493576,
+        "separationArcsec": 0.003509490006790886,
+        "positionKind": "predicted-track",
+        "observer": "Earth geocenter",
+        "withinTolerance": true,
+        "observerOffsetUpperBoundArcsec": null,
+        "observerRobust": false
+      }
+    ],
+    "rmsArcsec": 0.003509490006790886,
+    "withinTolerance": 1
+  },
+  "interpretation": "Known ephemeris control only. No Ceres measurement or discovery claim.",
+  "realSurveyChecks": [
+    {
+      "candidateId": "stx-e930676d41496f855572",
+      "classification": "insufficient-evidence",
+      "gaiaStatus": "ok",
+      "gaiaMatchCount": 3,
+      "jplStatus": "partial"
+    },
+    {
+      "candidateId": "stx-99946224e398cd973a25",
+      "classification": "insufficient-evidence",
+      "gaiaStatus": "ok",
+      "gaiaMatchCount": 3,
+      "jplStatus": "ok"
+    }
+  ]
+}

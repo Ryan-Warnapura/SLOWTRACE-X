@@ -11,6 +11,7 @@ import hashlib
 import io
 import json
 import math
+import re
 import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor
@@ -22,12 +23,17 @@ from urllib.parse import urlsplit, urlencode
 import numpy as np
 import requests
 from astropy.io import fits
-from astropy.wcs import WCS
+from astropy.wcs import NoConvergence, WCS
+
+from science.coverage import matching_records
 
 SIA = "https://irsa.ipac.caltech.edu/SIA/"
+TAP = "https://irsa.ipac.caltech.edu/TAP/sync"
 COLLECTIONS = ("spherex_dr1", "spherex_qr3")
-# SOURCE and FULLSAMPLE are deliberately NOT bad-pixel flags.
-MASK_BITS = 0x0A02CEC7
+OBSERVATION_NAME = re.compile(r"/level2_([\w]+_[1-4])D([1-6])_spx_[^/]+\.fits$")
+# SPHEREx Explanatory Supplement §3.4.3 mosaic exclusions, plus saturated OVERFLOW.
+# SOURCE, FULLSAMPLE and OUTLIER remain reported as informational flags.
+MASK_BITS = sum(1 << bit for bit in (0, 1, 2, 6, 7, 9, 10, 11, 14, 15, 17, 20, 22, 23, 24, 25, 26, 27, 28, 29))
 SAT_BITS = 0x00008002
 MISSING = 1 << 9
 BIT_NAMES = {0: "TRANSIENT", 1: "OVERFLOW", 2: "SUR_ERROR", 6: "NONFUNC",
@@ -35,7 +41,7 @@ BIT_NAMES = {0: "TRANSIENT", 1: "OVERFLOW", 2: "SUR_ERROR", 6: "NONFUNC",
              12: "FULLSAMPLE", 14: "PHANMISS", 15: "NONLINEAR", 17: "PERSIST",
              19: "OUTLIER", 20: "CROSSTALK", 21: "SOURCE", 22: "GHOST",
              23: "GHOST_FPA", 24: "GHOST_EXT", 25: "STREAK", 26: "BLOOM",
-             27: "SNOWBALL", 28: "HALO"}
+             27: "SNOWBALL", 28: "HALO", 29: "SATELLITE_HALO"}
 
 
 class ArchiveError(RuntimeError):
@@ -81,33 +87,75 @@ def _normalize(rows):
         try:
             if r.get("dataproduct_type", "image") != "image" or r.get("dataproduct_subtype", "science") != "science":
                 continue
-            collection = r["obs_collection"]
+            collection = r["obs_collection"].removesuffix("_deep")
             if collection not in COLLECTIONS:
                 continue
             det = int(r["energy_bandpassname"].split("-D")[-1])
             url = validate_url(r["access_url"])
-            mjd = (float(r["t_min"]) + float(r["t_max"])) / 2
-            if not math.isfinite(mjd) or not 1 <= det <= 6:
+            start, end = float(r["t_min"]), float(r["t_max"])
+            mjd = float(r.get("t_center", (start + end) / 2))
+            if not all(math.isfinite(x) for x in (start, mjd, end)) or not start <= mjd <= end or not 1 <= det <= 6:
                 continue
-            key = f"{r['obs_id']}D{det}"
+            match = OBSERVATION_NAME.search(url)
+            key = f"{match[1] if match else r['obs_id']}D{det}"
             item = dict(id=key, collection=collection, detector=det, mjd=mjd,
-                        startMjd=float(r["t_min"]), endMjd=float(r["t_max"]), date=date_mjd(mjd),
-                        url=url, cloudUrl=cloud_url(url), footprint=r.get("s_region"))
-            if key not in seen or collection == "spherex_dr1":
+                        startMjd=start, endMjd=end, date=date_mjd(mjd),
+                        url=url, cloudUrl=cloud_url(url), footprint=r.get("s_region"),
+                        metadataSource=r.get("metadataSource"), metadataRetrievedAt=r.get("metadataRetrievedAt"))
+            if r.get("fitsHeaderSha256"):
+                item["fitsHeaderSha256"] = r["fitsHeaderSha256"]
+            preferred = {"recorded-sia": 0, "nasa-fits-header-index": 1, "irsa-tap": 2, "irsa-sia": 2}
+            old = seen.get(key)
+            rank = (collection == "spherex_dr1", preferred.get(item["metadataSource"], 0))
+            old_rank = (old["collection"] == "spherex_dr1", preferred.get(old["metadataSource"], 0)) if old else (-1, -1)
+            if rank > old_rank:
                 seen[key] = item
         except (ValueError, TypeError, KeyError):
             continue
     return sorted(seen.values(), key=lambda x: (x["mjd"], x["detector"]))
 
 
-@lru_cache(maxsize=64)
-def _query_collection(ra, dec, collection, day):
-    params = {"COLLECTION": collection, "POS": f"CIRCLE {ra:.8f} {dec:.8f} 0.000277778", "RESPONSEFORMAT": "CSV"}
-    response = requests.get(SIA, params=params, timeout=(8, 40), headers={"User-Agent": "SLOWTRACE-X/1.0"})
+def _csv_response(response, columns):
     response.raise_for_status()
-    if not response.text.lstrip().startswith("s_ra,"):
+    table = csv.DictReader(io.StringIO(response.text.lstrip("\ufeff\r\n")))
+    if not set(columns).issubset(table.fieldnames or ()):
         raise ArchiveError("IRSA returned an unexpected search response.")
-    return list(csv.DictReader(io.StringIO(response.text))), response.url
+    return list(table)
+
+
+@lru_cache(maxsize=64)
+def _query_collection(ra, dec, collection, window):
+    params = [("COLLECTION", collection), ("COLLECTION", collection + "_deep"),
+              ("POS", f"CIRCLE {ra:.8f} {dec:.8f} 0.000277778"), ("RESPONSEFORMAT", "CSV"), ("MAXREC", "12001")]
+    response = requests.get(SIA, params=params, timeout=(5, 30), headers={"User-Agent": "SLOWTRACE-X/1.1"})
+    rows = _csv_response(response, ("obs_collection", "obs_id", "energy_bandpassname", "access_url", "t_min", "t_max"))
+    captured = now()
+    return [dict(row, metadataSource="irsa-sia", metadataRetrievedAt=captured) for row in rows], response.url, captured, len(rows) >= 12001
+
+
+@lru_cache(maxsize=64)
+def _query_tap(ra, dec, detector, releases, window):
+    paths = " OR ".join(f"a.uri LIKE '%spherex/{c.removeprefix('spherex_')}/level2/%'" for c in releases)
+    sql = ("SELECT TOP 4001 a.uri, p.time_bounds_lower, p.time_bounds_upper "
+           "FROM spherex.artifact a JOIN spherex.plane p ON a.planeid = p.planeid "
+           f"WHERE 1 = CONTAINS(POINT('ICRS', {ra:.8f}, {dec:.8f}), p.poly) "
+           f"AND p.energy_bandpassname = 'SPHEREx-D{detector}' AND ({paths}) ORDER BY p.time_bounds_lower")
+    response = requests.get(TAP, params={"REQUEST":"doQuery", "LANG":"ADQL", "FORMAT":"CSV", "QUERY":sql},
+                            timeout=(5, 24), headers={"User-Agent":"SLOWTRACE-X/1.1"})
+    rows = _csv_response(response, ("uri", "time_bounds_lower", "time_bounds_upper"))
+    retrieved_at = now()
+    normalized = []
+    for row in rows:
+        uri = row["uri"]
+        url = uri if uri.startswith("https://") else "https://irsa.ipac.caltech.edu/" + uri.lstrip("/")
+        match = OBSERVATION_NAME.search(url)
+        if not match or int(match[2]) != detector or "/spherex/" not in url:
+            continue
+        release = url.split("/spherex/", 1)[1].split("/", 1)[0]
+        normalized.append(dict(access_url=url, obs_id=match[1], obs_collection=f"spherex_{release}",
+                               energy_bandpassname=f"SPHEREx-D{detector}", t_min=row["time_bounds_lower"],
+                               t_max=row["time_bounds_upper"], metadataSource="irsa-tap", metadataRetrievedAt=retrieved_at))
+    return normalized, response.url, retrieved_at, len(rows) >= 4001
 
 
 @lru_cache(maxsize=1)
@@ -125,35 +173,72 @@ def _recorded_rows(ra, dec):
     return None
 
 
-def search(ra, dec, fov=5, detector=1, limit=12):
+def search(ra, dec, fov=5, detector=1, limit=12, *, indexed_only=False):
     checked_position(ra, dec, fov)
     if detector not in range(1, 7) or not 2 <= limit <= 24:
         raise ValueError("Choose detector 1–6 and 2–24 observations.")
-    rows, query_urls, notes, failed = [], [], [], []
-    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        futures = {c: pool.submit(_query_collection, round(ra, 7), round(dec, 7), c, day) for c in COLLECTIONS}
-        for c, future in futures.items():
+    rows, query_urls, notes, live_releases, indexed_releases, recorded_releases, checked_times = [], [], [], [], [], [], []
+    missing = list(COLLECTIONS)
+    window = int(time.time() // 600)
+    upstream_capped = False
+    if not indexed_only:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = {c: pool.submit(_query_collection, ra, dec, c, window) for c in COLLECTIONS}
+            for c, future in futures.items():
+                try:
+                    part, url, checked, capped = future.result()
+                    rows.extend(part)
+                    query_urls.append(url)
+                    checked_times.append(checked)
+                    live_releases.append(c)
+                    missing.remove(c)
+                    upstream_capped |= capped
+                except (requests.RequestException, ArchiveError) as error:
+                    notes.append(f"{c}: IRSA SIA unavailable ({type(error).__name__}).")
+        if missing:
             try:
-                part, url = future.result()
+                part, url, checked, capped = _query_tap(ra, dec, detector, tuple(missing), window)
                 rows.extend(part)
                 query_urls.append(url)
-            except Exception as error:
-                failed.append(c)
-                notes.append(f"{c}: archive search unavailable ({type(error).__name__}).")
-    status, checked = "live", now()
-    if failed:
+                checked_times.append(checked)
+                live_releases.extend(missing)
+                missing.clear()
+                upstream_capped |= capped
+                notes.append("IRSA TAP supplied metadata for releases that could not be queried through SIA.")
+            except (requests.RequestException, ArchiveError) as error:
+                notes.append(f"IRSA TAP fallback unavailable ({type(error).__name__}).")
+    index_date = None
+    if missing:
+        records, index_date = matching_records(ra, dec, detector, {c.removeprefix("spherex_") for c in missing})
+        for r in records:
+            release = r["url"].split("/spherex/", 1)[1].split("/", 1)[0]
+            collection = f"spherex_{release}"
+            rows.append(dict(access_url=r["url"], obs_id=r["id"], obs_collection=collection,
+                             energy_bandpassname=f"SPHEREx-D{r['detector']}", t_min=r["startMjd"], t_max=r["endMjd"], t_center=r["mjd"],
+                             metadataSource="nasa-fits-header-index", metadataRetrievedAt=r["capturedAt"],
+                             fitsHeaderSha256=r["fitsHeaderSha256"]))
+            if collection not in indexed_releases:
+                indexed_releases.append(collection)
+        if records:
+            checked_times.append(index_date)
+            notes.append("Some observations were located using recorded NASA FITS headers and tested against their detector footprints. This sample does not cover the entire archive. Pixels are retrieved separately.")
         recorded = _recorded_rows(ra, dec)
         if recorded:
-            rows.extend(r for r in recorded["observations"] if r["obs_collection"] in failed)
-            status = "recorded-metadata" if len(failed) == 2 else "partial-live"
-            checked = recorded["archiveChecked"]
-            notes.append("Search includes a recorded IRSA observation list from SkyShift, checked 2026-11-14. Pixel data are still retrieved from NASA. This list is not a fresh archive query.")
-        elif len(failed) == 2:
-            raise ArchiveError("NASA IRSA search is temporarily unavailable. Retry later or use one of the five recorded target fields.")
-        else:
-            status = "partial-live"
+            for row in recorded["observations"]:
+                collection = row["obs_collection"]
+                if collection in missing and row["energy_bandpassname"].endswith(f"-D{detector}"):
+                    rows.append(dict(row, metadataSource="recorded-sia", metadataRetrievedAt=recorded["archiveChecked"]))
+                    if collection not in recorded_releases:
+                        recorded_releases.append(collection)
+            if recorded_releases:
+                checked_times.append(recorded["archiveChecked"])
+                notes.append(f"Search includes a recorded IRSA observation list from SkyShift, checked {recorded['archiveChecked']}. Pixel data are retrieved separately.")
+    if upstream_capped:
+        notes.append("The live archive reached its response row limit. The reported total is a lower bound.")
+    status = "live" if not missing else "partial-live" if live_releases else "recorded-metadata"
     observations = [x for x in _normalize(rows) if x["detector"] == detector]
+    if not live_releases and not observations and not indexed_only:
+        raise ArchiveError("NASA IRSA search is temporarily unavailable and the recorded index has no verified match at this position and detector. This is not evidence of absent coverage. Retry later or choose one of the five target fields.")
     total = len(observations)
     if total > limit:
         # Preserve temporal extent; the response explicitly discloses bounded sampling.
@@ -161,8 +246,11 @@ def search(ra, dec, fov=5, detector=1, limit=12):
         observations = [observations[i] for i in indices]
         notes.append(f"Showing {limit} time-spaced observations out of {total}; this is a bounded sample, not the entire archive.")
     return dict(query=dict(ra=ra, dec=dec, fov=fov, detector=detector), observations=observations,
-                totalAvailable=total, truncated=total > limit, queriedAt=now(), archiveChecked=checked,
-                source="NASA/IPAC IRSA", status=status, warnings=notes, queryUrls=query_urls)
+                totalAvailable=total, truncated=total > limit or upstream_capped, queriedAt=now(),
+                archiveChecked=max(checked_times, default=None), source="NASA/IPAC IRSA", status=status, warnings=notes,
+                queryUrls=query_urls, searchCoverage=dict(complete=not missing and not upstream_capped,
+                    liveCollections=live_releases, indexedCollections=indexed_releases,
+                    recordedCollections=recorded_releases, indexGeneratedAt=index_date))
 
 
 def target_grid(ra, dec, fov, pixels):
@@ -175,10 +263,10 @@ def target_grid(ra, dec, fov, pixels):
     return w, w.all_pix2world(x, y, 0)
 
 
-def wavelength_map(header, table, x, y):
+def wavelength_map(header, table, x, y, component=1):
     """FITS Paper III WCS-WAVE bilinear table; adapted from SkyShift WaveTable."""
     cx, cy = np.asarray(table["X"][0]), np.asarray(table["Y"][0])
-    values = np.asarray(table["VALUES"][0], dtype=float)[..., int(header.get("PV1_3W", 1)) - 1]
+    values = np.asarray(table["VALUES"][0], dtype=float)[..., int(header.get(f"PV{component}_3W", component)) - 1]
     px = header.get("CRVAL1W", 1) + header.get("CDELT1W", 1) * (x + 1 - header.get("CRPIX1W", 1))
     py = header.get("CRVAL2W", 1) + header.get("CDELT2W", 1) * (y + 1 - header.get("CRPIX2W", 1))
     px, py = np.clip(px, cx[0], cx[-1]), np.clip(py, cy[0], cy[-1])
@@ -246,13 +334,39 @@ def aperture_measurement(data, variance, flags, x, y, native_wcs):
 
 def _get_cutout(url, ra, dec, fov):
     cutout = url + "?" + urlencode(dict(center=f"{ra:.9f},{dec:.9f}", size=f"{fov / 60 * 1.5:.8f}"))
-    response = requests.get(cutout, timeout=(8, 35), headers={"User-Agent": "SLOWTRACE-X/1.0"}, allow_redirects=False)
-    response.raise_for_status()
-    if not response.content.startswith(b"SIMPLE  ="):
+    with requests.get(cutout, timeout=(6, 25), headers={"User-Agent": "SLOWTRACE-X/1.1"},
+                      allow_redirects=False, stream=True) as response:
+        response.raise_for_status()
+        if response.status_code != 200:
+            raise ArchiveError("The archive did not return a complete FITS cutout.")
+        raw = bytearray()
+        for chunk in response.iter_content(chunk_size=256*1024):
+            raw.extend(chunk)
+            if len(raw) > 30_000_000:
+                raise ArchiveError("Cutout exceeds the processing budget; choose a smaller field.")
+    if not raw.startswith(b"SIMPLE  ="):
         raise ArchiveError("The archive did not return a FITS file.")
-    if len(response.content) > 30_000_000:
-        raise ArchiveError("Cutout exceeds the processing budget; choose a smaller field.")
-    return fits.open(io.BytesIO(response.content), memmap=False), cutout, hashlib.sha256(response.content).hexdigest()
+    return fits.open(io.BytesIO(raw), memmap=False), cutout, hashlib.sha256(raw).hexdigest()
+
+
+def _number_or_none(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+    return value if math.isfinite(value) else None
+
+
+def _observer_state(header, mjd):
+    """Keep documented origin and units; RADESYS describes image WCS, not these vectors."""
+    if header.get("XYZ_SC_SYSTEM") != "GEOCENTER" or header.get("VXYZ_SC_SYSTEM") != "GEOCENTER":
+        return None
+    position = [_number_or_none(header.get(f"{axis}_SC")) for axis in "XYZ"]
+    velocity = [_number_or_none(header.get(f"V{axis}_SC")) for axis in "XYZ"]
+    if None in position + velocity:
+        return None
+    return dict(positionKm=position, velocityKmS=velocity, origin="GEOCENTER", frame=None,
+                epochMjd=mjd, source="SPHEREx Level 2 IMAGE FITS header")
 
 
 def _read_frame(url, ra, dec, fov, pixels):
@@ -262,20 +376,30 @@ def _read_frame(url, ra, dec, fov, pixels):
         raise ValueError("Image size must be 32–128 pixels.")
     notices = ["Reprojection correlates adjacent pixels. Reported variance propagates independent input-pixel variances; it excludes covariance and systematic calibration errors.",
                "Different exposures can observe different wavelengths within a detector. Brightness changes and residuals may reflect spectral differences or PSF changes, rather than motion."]
-    raw_hash, cutout_url, source = None, None, "IRSA cutout"
+    errors = (requests.RequestException, ValueError, KeyError, RuntimeError, OSError, NoConvergence)
     try:
         hdul, cutout_url, raw_hash = _get_cutout(url, ra, dec, fov)
-    except Exception:
-        source = "NASA public S3 range reads"
-        notices.append("IRSA cutout service unavailable; reading the same NASA exposure from its public S3 mirror.")
+        return _process_frame(hdul, url, ra, dec, fov, pixels, cutout_url, raw_hash, "IRSA cutout", notices.copy())
+    except errors as first_error:
+        notices.append(f"IRSA cutout could not be used ({type(first_error).__name__}); reading the same NASA exposure from its public S3 mirror.")
+    try:
         hdul = fits.open(cloud_url(url), use_fsspec=True,
-                         fsspec_kwargs={"block_size": 64*1024, "cache_type": "readahead"}, memmap=False)
+                         fsspec_kwargs={"block_size": 64*1024, "cache_type": "readahead",
+                                        "client_kwargs": {"trust_env": True}}, memmap=False)
+        return _process_frame(hdul, url, ra, dec, fov, pixels, None, None, "NASA public S3 range reads", notices)
+    except ArchiveError:
+        raise
+    except errors as error:
+        raise ArchiveError(f"Neither source returned a usable NASA exposure ({type(error).__name__}). Try another time or a smaller field.") from error
+
+
+def _process_frame(hdul, url, ra, dec, fov, pixels, cutout_url, raw_hash, source, notices):
     with hdul:
         header = hdul["IMAGE"].header.copy()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             native = WCS(header).celestial
-        grid, sky = target_grid(ra, dec, fov, pixels)
+        _, sky = target_grid(ra, dec, fov, pixels)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             x, y = native.all_world2pix(*sky, 0, quiet=True)
@@ -298,29 +422,46 @@ def _read_frame(url, ra, dec, fov, pixels):
             data -= np.asarray(hdul["ZODI"].section[region], dtype=float)
         else:
             notices.append("No ZODI extension: zodiacal-light model was not subtracted.")
-        wave = wavelength_map(header, hdul["WCS-WAVE"].data, x, y) if "WCS-WAVE" in hdul else np.full(x.shape, np.nan)
-        center_x, center_y = native.all_world2pix(ra, dec, 0)
-        center_wave = float(wavelength_map(header, hdul["WCS-WAVE"].data, center_x, center_y)) if "WCS-WAVE" in hdul else None
+        wave_table = hdul["WCS-WAVE"].data if "WCS-WAVE" in hdul else None
+        wave = wavelength_map(header, wave_table, x, y) if wave_table is not None else np.full(x.shape, np.nan)
+        center_x, center_y = native.all_world2pix(ra, dec, 0, quiet=True)
+        center_wave, center_bandwidth = None, None
+        if wave_table is not None and -.5 <= center_x < nx-.5 and -.5 <= center_y < ny-.5:
+            center_wave = _number_or_none(wavelength_map(header, wave_table, center_x, center_y))
+            if "PV2_3W" in header:
+                center_bandwidth = _number_or_none(wavelength_map(header, wave_table, center_x, center_y, 2))
+        if wave_table is None:
+            notices.append("No WCS-WAVE extension; wavelength is unavailable for this exposure.")
         photometry = aperture_measurement(data, var, flags, float(center_x)-x0, float(center_y)-y0, native)
         image, variance, mask = resample(data, var, flags, x-x0, y-y0)
         covered = np.isfinite(image)
         if not covered.any():
             raise ArchiveError("No valid science pixels remain after contamination and coverage masking.")
         wave[~covered] = np.nan
+        measured_waves = wave[np.isfinite(wave)]
         mjd = float(header["MJD-AVG"])
+        fine = header.get("FINAST")
+        if fine is not None and fine != 0:
+            notices.append(f"SPHEREx fine astrometry quality flag is {fine}; apparent offsets may reflect astrometric error.")
         provenance = dict(sourceUrl=url, cloudUrl=cloud_url(url), cutoutUrl=cutout_url, retrievedAt=now(),
-                          sha256=raw_hash, method=source, pipeline="IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling")
+                          sha256=raw_hash, method=source, pipelineVersion="archive-1.1",
+                          pipeline=f"{'IMAGE minus ZODI' if zodi_subtracted else 'IMAGE (no ZODI extension)'}; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling")
         array_hash = hashlib.sha256(np.nan_to_num(image, nan=-1e30).astype("<f4").tobytes()).hexdigest()
         provenance["processedSha256"] = array_hash
         metadata = dict(id=str(header.get("OBSID", "")), detector=int(header["DETECTOR"]), mjd=mjd, date=date_mjd(mjd),
                         unit=str(header.get("BUNIT", "MJy/sr")).strip(), pixelArcsec=fov*60/pixels,
-                        center=dict(ra=ra, dec=dec), wavelengthCenter=center_wave,
-                        wavelengthMin=float(np.nanmin(wave)), wavelengthMax=float(np.nanmax(wave)),
+                        center=dict(ra=ra, dec=dec), wavelengthCenter=center_wave, bandwidthCenter=center_bandwidth,
+                        wavelengthMin=float(measured_waves.min()) if len(measured_waves) else None,
+                        wavelengthMax=float(measured_waves.max()) if len(measured_waves) else None,
                         badFraction=float(1-covered.mean()), saturatedFraction=float(np.mean((mask & SAT_BITS) != 0)),
                         zodiSubtracted=zodi_subtracted, calibrationVersion=str(hdul[0].header.get("VERSION", header.get("VERSION", "see FITS headers"))),
                         psfAvailable="EPSF" in hdul, psfMatched=False,
                         maskBits=MASK_BITS, flagsPresent=[name for bit,name in BIT_NAMES.items() if np.any(mask & (1<<bit))],
-                        centerPixelX=(pixels-1)/2, centerPixelY=(pixels-1)/2)
+                        flagPixelCounts={name:int(np.count_nonzero(mask & (1<<bit))) for bit,name in BIT_NAMES.items() if np.any(mask & (1<<bit))},
+                        centerPixelX=(pixels-1)/2, centerPixelY=(pixels-1)/2,
+                        fineAstrometryFlag=fine, l1Quality=header.get("L1DQAFLG"),
+                        observerState=_observer_state(header, mjd), startMjd=_number_or_none(header.get("MJD-BEG")),
+                        endMjd=_number_or_none(header.get("MJD-END")))
     return dict(width=pixels, height=pixels, data=as_list(image), variance=as_list(variance),
                 mask=mask.ravel().tolist(), wavelength=as_list(wave), metadata=metadata,
                 provenance=provenance, photometry=photometry, warnings=notices, dataKind="processed-observation")

@@ -32,6 +32,7 @@ import {
   ScanLine,
   Search,
   ShieldCheck,
+  Radar,
   SlidersHorizontal,
   Sparkles,
   Telescope,
@@ -49,11 +50,24 @@ const PlannerChart = lazy(() =>
 );
 import Atlas from "./Atlas";
 import {
+  archiveFitsUrls,
+  compareFrames,
+  EXAMPLE_PATHS,
+  parseCoordinate,
+} from "./observation";
+import type {
+  Candidate,
+  InvestigationInput,
+  SurveySnapshot,
+} from "./surveyTypes";
+const SurveyDesk = lazy(() => import("./SurveyDesk"));
+import {
   aperture,
   date,
   download,
   fmt,
   pixelSky,
+  skyPixel,
   post,
   quantile,
   request,
@@ -62,6 +76,7 @@ import { DETECTORS, TARGETS } from "./types";
 import type { Frame, Observation, Query, SearchResult } from "./types";
 
 type Page =
+  | "survey"
   | "observe"
   | "atlas"
   | "trace"
@@ -78,11 +93,13 @@ type Note = {
   text: string;
   classification: string;
   sourceIds: string[];
+  candidateId?: string;
 };
 type Result = Record<string, any>;
 const NAV = [
   { id: "observe", label: "Observation desk", icon: Telescope },
   { id: "atlas", label: "Sky atlas", icon: Globe2 },
+  { id: "survey", label: "Survey & candidates", icon: Radar },
   { id: "trace", label: "DeepTrace search", icon: ScanLine },
   { id: "spectra", label: "Spectral explorer", icon: Waves },
   { id: "lab", label: "Experiment lab", icon: FlaskConical },
@@ -93,6 +110,10 @@ const TITLES: Record<Page, [string, string]> = {
   observe: [
     "Watch the universe change.",
     "An observation is a beginning. Follow what moves.",
+  ],
+  survey: [
+    "Survey & candidates",
+    "Review processed fields, inspect measured peaks, and check catalog evidence.",
   ],
   atlas: [
     "A sky full of possibilities.",
@@ -123,6 +144,10 @@ const TITLES: Record<Page, [string, string]> = {
     "Every observation has a source. Every calculation has limits.",
   ],
 };
+type LoadSource =
+  | { kind: "recorded"; path: string }
+  | { kind: "fits"; urls: string[]; label: string; pixels?: number };
+type Packet = { search: SearchResult; frames: Frame[] };
 function initialQuery(): Query {
   const p = new URLSearchParams(location.search);
   const ra = Number(p.get("ra") ?? TARGETS[0].ra),
@@ -185,17 +210,31 @@ function Notice({
 }
 
 export default function App() {
-  const [page, setPage] = useState<Page>("observe"),
+  const [page, setPage] = useState<Page>(() =>
+      new URLSearchParams(location.search).get("page") === "survey"
+        ? "survey"
+        : "observe",
+    ),
     [mobile, setMobile] = useState(false),
     [query, setQuery] = useState<Query>(initialQuery),
     [draft, setDraft] = useState<Query>(initialQuery),
+    [raText, setRaText] = useState(() => String(initialQuery().ra)),
+    [decText, setDecText] = useState(() => String(initialQuery().dec)),
+    [inputError, setInputError] = useState(""),
+    [fitsText, setFitsText] = useState(""),
+    [referenceUrl, setReferenceUrl] = useState(""),
+    [matchedOnly, setMatchedOnly] = useState(false),
+    [candidateContext, setCandidateContext] = useState<Candidate | null>(null),
+    [manualCandidate, setManualCandidate] = useState<InvestigationInput | null>(
+      null,
+    ),
     [search, setSearch] = useState<SearchResult | null>(null),
     [frames, setFrames] = useState<Frame[]>([]),
     [loading, setLoading] = useState(false),
     [progress, setProgress] = useState(""),
     [error, setError] = useState(""),
     [failures, setFailures] = useState<string[]>([]),
-    [active, setActive] = useState(0),
+    [activeUrl, setActiveUrl] = useState(""),
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(900),
     [mode, setMode] = useState("blink"),
@@ -225,8 +264,27 @@ export default function App() {
     [spectralAxis, setSpectralAxis] = useState("wavelength");
   const serial = useRef(0),
     controller = useRef<AbortController | null>(null);
-  const frame = frames[active];
-  const reference = frames[0];
+  const reference =
+    frames.find((f) => f.provenance.sourceUrl === referenceUrl) ?? frames[0];
+  const timeline = useMemo(
+    () =>
+      matchedOnly && reference
+        ? frames.filter(
+            (f) => f === reference || compareFrames(f, reference).eligible,
+          )
+        : frames,
+    [frames, reference, matchedOnly],
+  );
+  const active = Math.max(
+    0,
+    timeline.findIndex((f) => f.provenance.sourceUrl === activeUrl),
+  );
+  const frame = timeline[active];
+  const comparison = compareFrames(frame, reference);
+  const selectEpoch = (index: number) => {
+    setActiveUrl(timeline[index]?.provenance.sourceUrl || "");
+    setPlaying(false);
+  };
   const commonStretch = useMemo<[number, number] | undefined>(() => {
     if (!frames.length) return;
     const values = frames.flatMap((f) =>
@@ -237,118 +295,251 @@ export default function App() {
   const selected =
     point && frame
       ? pixelSky(point.x, point.y, frame.width, frame.height, query)
-      : { ra: query.ra, dec: query.dec };
+      : candidateContext
+        ? { ra: candidateContext.ra, dec: candidateContext.dec }
+        : { ra: query.ra, dec: query.dec };
   const target = TARGETS.find(
     (t) =>
       Math.abs(t.ra - query.ra) < 0.001 && Math.abs(t.dec - query.dec) < 0.001,
   );
   const fieldName = target?.name || "Custom sky field";
-  const load = useCallback(async (q: Query) => {
-    controller.current?.abort();
-    const c = new AbortController();
-    controller.current = c;
-    const job = ++serial.current;
-    setLoading(true);
-    setError("");
-    setFailures([]);
-    setFrames([]);
-    setSearch(null);
-    setActive(0);
-    setPoint(null);
-    setResult(null);
-    setExperiment(null);
-    setPlan(null);
-    setPlaying(false);
-    setQuery(q);
-    setDraft(q);
-    setProgress("Searching DR1 + QR3 at NASA/IPAC IRSA…");
-    history.replaceState(
-      null,
-      "",
-      `?${new URLSearchParams(Object.entries(q).map(([k, v]) => [k, String(v)]))}`,
-    );
-    try {
-      const s = await request<SearchResult>(
-        `/api/search?${new URLSearchParams({ ...Object.fromEntries(Object.entries(q).map(([k, v]) => [k, String(v)])), limit: "8" })}`,
-        { signal: c.signal },
-      );
-      if (job !== serial.current) return;
-      setSearch(s);
-      if (!s.observations.length) {
-        setProgress(
-          "No matching observations returned. Try another detector or field.",
-        );
-        return;
-      }
-      let cursor = 0,
-        done = 0;
-      const worker = async () => {
-        while (cursor < s.observations.length) {
-          const o = s.observations[cursor++];
-          if (c.signal.aborted) return;
-          try {
-            const f = await request<Frame>(
-              `/api/frame?${new URLSearchParams({ url: o.url, ...(o.cloudUrl ? { cloudUrl: o.cloudUrl } : {}), ra: String(q.ra), dec: String(q.dec), fov: String(q.fov), pixels: "96" })}`,
-              { signal: c.signal },
-            );
-            if (job !== serial.current) return;
-            setFrames((v) =>
-              [...v, f].sort((a, b) => a.metadata.mjd - b.metadata.mjd),
-            );
-          } catch (e) {
-            if (!c.signal.aborted)
-              setFailures((v) => [...v, `${o.id}: ${(e as Error).message}`]);
-          }
-          done++;
-          if (job === serial.current)
-            setProgress(
-              `Processed ${done} of ${s.observations.length} observations`,
-            );
-        }
-      };
-      await Promise.all([worker(), worker()]);
-    } catch (e) {
-      if (!c.signal.aborted) setError((e as Error).message);
-    } finally {
-      if (job === serial.current) setLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    if (location.search) {
-      void load(initialQuery());
-      return () => controller.current?.abort();
-    }
-    const starter = new AbortController();
-    request<{ search: SearchResult; frames: Frame[] }>("/starter.json", {
-      signal: starter.signal,
-    })
-      .then((payload) => {
-        if (
-          !starter.signal.aborted &&
-          serial.current === 0 &&
-          payload.frames.length
-        ) {
-          setSearch(payload.search);
-          setFrames(payload.frames);
-        }
-      })
-      .catch(() => {
-        if (!starter.signal.aborted && serial.current === 0)
-          void load(initialQuery());
-      });
-    return () => {
-      starter.abort();
+  const load = useCallback(
+    async (q: Query, source?: LoadSource, candidate?: Candidate) => {
       controller.current?.abort();
-    };
+      const cancellation = new AbortController();
+      controller.current = cancellation;
+      const job = ++serial.current;
+      const signal = cancellation.signal;
+      setLoading(true);
+      setError("");
+      setInputError("");
+      setFailures([]);
+      setFrames([]);
+      setSearch(null);
+      setActiveUrl("");
+      setReferenceUrl("");
+      setMatchedOnly(false);
+      setPoint(null);
+      setCandidateContext(candidate ?? null);
+      setResult(null);
+      setExperiment(null);
+      setPlan(null);
+      setPlaying(false);
+      setQuery(q);
+      setDraft(q);
+      setRaText(String(q.ra));
+      setDecText(String(q.dec));
+      setProgress(
+        source?.kind === "recorded"
+          ? "Loading recorded NASA observations…"
+          : source?.kind === "fits"
+            ? "Retrieving specified NASA images…"
+            : "Searching DR1 and QR3 at NASA/IPAC IRSA…",
+      );
+      const params = new URLSearchParams(
+        Object.entries(q).map(([key, value]) => [key, String(value)]),
+      );
+      if (source?.kind === "recorded") {
+        const example = EXAMPLE_PATHS.indexOf(source.path);
+        if (example >= 0) params.set("example", String(example));
+      }
+      if (candidate) params.set("evidence", candidate.id);
+      history.replaceState(null, "", `?${params}`);
+      try {
+        if (source?.kind === "recorded") {
+          const packet = await request<Packet>(source.path, { signal });
+          if (signal.aborted || job !== serial.current) return;
+          if (!packet.frames.length)
+            throw new Error(
+              "The recorded example contains no usable exposures.",
+            );
+          const measuredField = packet.search.query;
+          const actualParams = new URLSearchParams(
+            Object.entries(measuredField).map(([key, value]) => [
+              key,
+              String(value),
+            ]),
+          );
+          actualParams.set(
+            "example",
+            String(EXAMPLE_PATHS.indexOf(source.path)),
+          );
+          history.replaceState(null, "", `?${actualParams}`);
+          setQuery(measuredField);
+          setDraft(measuredField);
+          setRaText(String(measuredField.ra));
+          setDecText(String(measuredField.dec));
+          setSearch(packet.search);
+          setFrames(packet.frames);
+          return;
+        }
+
+        const found =
+          source?.kind === "fits"
+            ? null
+            : await request<SearchResult>(`/api/search?${params}&limit=8`, {
+                signal,
+              });
+        if (signal.aborted || job !== serial.current) return;
+        setSearch(found);
+        const urls =
+          source?.kind === "fits"
+            ? source.urls
+            : (found?.observations.map((o) => o.url) ?? []);
+        if (!urls.length) return;
+        let cursor = 0;
+        let done = 0;
+        let passed = 0;
+        const observations: Observation[] = [];
+        const worker = async () => {
+          while (cursor < urls.length && !signal.aborted) {
+            const url = urls[cursor++];
+            try {
+              const frameParams = new URLSearchParams({
+                url,
+                ra: String(q.ra),
+                dec: String(q.dec),
+                fov: String(q.fov),
+                pixels: String(
+                  source?.kind === "fits" ? (source.pixels ?? 96) : 96,
+                ),
+              });
+              const loaded = await request<Frame>(`/api/frame?${frameParams}`, {
+                signal,
+              });
+              if (signal.aborted || job !== serial.current) return;
+              if (loaded.metadata.detector !== q.detector)
+                throw new Error(
+                  `Detector D${loaded.metadata.detector} does not match the chosen D${q.detector}.`,
+                );
+              passed++;
+              observations.push({
+                id: loaded.metadata.id,
+                collection: url.includes("/dr1/")
+                  ? "spherex_dr1"
+                  : "spherex_qr3",
+                detector: loaded.metadata.detector,
+                mjd: loaded.metadata.mjd,
+                date: loaded.metadata.date,
+                url,
+                metadataSource: "FITS header",
+                metadataRetrievedAt: loaded.provenance.retrievedAt,
+              });
+              setFrames((previous) =>
+                [...previous, loaded].sort(
+                  (a, b) => a.metadata.mjd - b.metadata.mjd,
+                ),
+              );
+            } catch (error) {
+              if (!signal.aborted)
+                setFailures((previous) => [
+                  ...previous,
+                  `${url.split("/").at(-1)}: ${(error as Error).message}`,
+                ]);
+            }
+            done++;
+            if (!signal.aborted && job === serial.current)
+              setProgress(
+                `Loaded ${passed} of ${urls.length} observations (${done} attempted)`,
+              );
+          }
+        };
+        await Promise.all([worker(), worker()]);
+        if (job !== serial.current || signal.aborted) return;
+        if (source?.kind === "fits")
+          setSearch({
+            query: q,
+            observations,
+            totalAvailable: urls.length,
+            truncated: false,
+            queriedAt: new Date().toISOString(),
+            source: "NASA/IPAC IRSA",
+            status: "specified-observations",
+            queryUrls: [],
+            warnings: [source.label],
+          });
+      } catch (error) {
+        if (!signal.aborted && job === serial.current)
+          setError((error as Error).message);
+      } finally {
+        if (job === serial.current) setLoading(false);
+      }
+    },
+    [],
+  );
+  useEffect(() => {
+    const parameters = new URLSearchParams(location.search);
+    if (parameters.get("page") === "survey") return;
+    const query = initialQuery();
+    const evidenceId = parameters.get("evidence");
+    if (evidenceId) {
+      const lookup = new AbortController();
+      request<SurveySnapshot>("/survey.json", { signal: lookup.signal })
+        .then((snapshot) => {
+          if (lookup.signal.aborted) return;
+          const exact = snapshot.candidates.find(
+            (candidate) => candidate.id === evidenceId,
+          );
+          if (!exact?.field || !exact.observations.length)
+            throw new Error(
+              "This finding is unavailable in the currently published survey.",
+            );
+          void load(
+            exact.field,
+            {
+              kind: "fits",
+              urls: exact.observations.map((o) => o.url),
+              label: "Exact survey evidence selected by source URL.",
+              pixels: exact.analysisPixels,
+            },
+            exact,
+          );
+        })
+        .catch((error) => {
+          if (!lookup.signal.aborted) setError((error as Error).message);
+        });
+      return () => {
+        lookup.abort();
+        controller.current?.abort();
+      };
+    }
+    const example = parameters.get("example");
+    if (example !== null && EXAMPLE_PATHS[Number(example)]) {
+      void load(query, {
+        kind: "recorded",
+        path: EXAMPLE_PATHS[Number(example)],
+      });
+    } else if (parameters.has("ra") || parameters.has("dec")) {
+      const ra = parameters.get("ra") ?? "";
+      const dec = parameters.get("dec") ?? "";
+      try {
+        void load({
+          ...query,
+          ra: parseCoordinate(ra, "ra"),
+          dec: parseCoordinate(dec, "dec"),
+        });
+      } catch (error) {
+        setRaText(ra);
+        setDecText(dec);
+        setInputError((error as Error).message);
+      }
+    } else void load(query, { kind: "recorded", path: EXAMPLE_PATHS[0] });
+    return () => controller.current?.abort();
   }, [load]);
   useEffect(() => {
-    if (!playing || frames.length < 2) return;
-    const t = setInterval(
-      () => setActive((v) => (v + 1) % frames.length),
-      speed,
-    );
-    return () => clearInterval(t);
-  }, [playing, frames.length, speed]);
+    if (!playing || timeline.length < 2) return;
+    const timer = setInterval(() => {
+      if (document.hidden) return;
+      setActiveUrl((current) => {
+        const index = Math.max(
+          0,
+          timeline.findIndex((f) => f.provenance.sourceUrl === current),
+        );
+        return timeline[(index + 1) % timeline.length].provenance.sourceUrl;
+      });
+    }, speed);
+    return () => clearInterval(timer);
+  }, [playing, speed, timeline]);
   useEffect(() => {
     try {
       localStorage.setItem("slowtrace-notes", JSON.stringify(notes));
@@ -358,33 +549,82 @@ export default function App() {
       );
     }
   }, [notes]);
+  const pointFor = useCallback(
+    (f: Frame) => {
+      if (point) return point;
+      if (!candidateContext)
+        return { x: Math.floor(f.width / 2), y: Math.floor(f.height / 2) };
+      const epoch = candidateContext.evidence.epochMeasurements?.find(
+        (e) => Math.abs(e.mjd - f.metadata.mjd) < 0.001,
+      );
+      return skyPixel(
+        epoch?.ra ?? candidateContext.ra,
+        epoch?.dec ?? candidateContext.dec,
+        f.width,
+        f.height,
+        query,
+      );
+    },
+    [point, candidateContext, query],
+  );
   const measurements = useMemo(
     () =>
-      frames
-        .map((f) =>
-          aperture(
-            f,
-            point?.x ?? Math.floor(f.width / 2),
-            point?.y ?? Math.floor(f.height / 2),
-          ),
-        )
-        .filter((v) => v.value !== null),
-    [frames, point],
+      frames.flatMap((f) => {
+        const pixel = pointFor(f);
+        if (!pixel) return [];
+        const measurement = aperture(f, pixel.x, pixel.y);
+        return measurement.value === null ? [] : [measurement];
+      }),
+    [frames, pointFor],
   );
   function navigate(p: Page) {
     setPage(p);
+    if (p === "survey") history.replaceState(null, "", "?page=survey");
+    else if (new URLSearchParams(location.search).has("page"))
+      history.replaceState(
+        null,
+        "",
+        `?ra=${query.ra}&dec=${query.dec}&fov=${query.fov}&detector=${query.detector}`,
+      );
     setMobile(false);
     setPlaying(false);
   }
-  function chooseTarget(i: number) {
-    const t = TARGETS[i];
-    void load({
-      ...draft,
-      fov: i === 2 ? Math.max(5, draft.fov) : draft.fov,
-      ra: t.ra,
-      dec: t.dec,
-    });
-    setPage("observe");
+  function chooseTarget(index: number) {
+    const target = TARGETS[index];
+    void load(
+      { ra: target.ra, dec: target.dec, detector: index === 2 ? 6 : 1, fov: 5 },
+      { kind: "recorded", path: EXAMPLE_PATHS[index] },
+    );
+    navigate("observe");
+  }
+  function submitField(source?: LoadSource) {
+    try {
+      const ra = parseCoordinate(raText, "ra");
+      const dec = parseCoordinate(decText, "dec");
+      void load({ ...draft, ra, dec }, source);
+      navigate("observe");
+    } catch (error) {
+      setInputError((error as Error).message);
+    }
+  }
+  function openFinding(candidate: Candidate, view: Page) {
+    const field = candidate.field;
+    const urls = candidate.observations.map((o) => o.url);
+    if (field && urls.length) {
+      void load(
+        field,
+        {
+          kind: "fits",
+          urls,
+          label: "Exact survey evidence selected by source URL.",
+          pixels: candidate.analysisPixels,
+        },
+        candidate,
+      );
+    } else {
+      setCandidateContext(candidate);
+    }
+    navigate(view);
   }
   function saveNote() {
     if (!note.trim()) {
@@ -399,6 +639,7 @@ export default function App() {
         text: note.trim(),
         classification,
         sourceIds: frames.map((f) => f.metadata.id),
+        candidateId: candidateContext?.id,
       },
       ...n,
     ]);
@@ -412,6 +653,7 @@ export default function App() {
       kind: "preliminary-research-record",
       query,
       selection: selected,
+      linkedCandidate: candidateContext?.id,
       archive: search,
       observations: frames.map((f) => ({
         metadata: f.metadata,
@@ -473,6 +715,42 @@ export default function App() {
       setWorking("");
     }
   }
+  function investigatePeak(peak: Result, analysis: Result) {
+    const referenceMjd = Number(analysis.referenceMjd);
+    const width = Number(analysis.width);
+    const height = Number(analysis.height);
+    const epochMeasurements = (analysis.selectedFrameIndices as number[]).map(
+      (index) => {
+        const meta = analysis.observationMetadata[index];
+        const dt = Number(meta.mjd) - referenceMjd;
+        const x = peak.x + (peak.velocityWestArcsecDay * dt) / meta.pixelArcsec;
+        const y =
+          peak.y + (peak.velocitySouthArcsecDay * dt) / meta.pixelArcsec;
+        const pos = pixelSky(x, y, width, height, query);
+        return {
+          ...pos,
+          mjd: meta.mjd,
+          positionKind: "predicted-track",
+          wavelengthUm: meta.wavelengthCenter,
+          observerState: meta.observerState,
+        };
+      },
+    );
+    const id = `trace-${query.ra.toFixed(6)}-${query.dec.toFixed(6)}-${query.detector}-${Math.round(referenceMjd * 10000)}-${peak.x}-${peak.y}-${peak.velocityWestArcsecDay}-${peak.velocitySouthArcsecDay}`;
+    setManualCandidate({
+      id,
+      ra: peak.ra,
+      dec: peak.dec,
+      referenceMjd,
+      evidence: {
+        ...peak,
+        epochMeasurements,
+        sourceUrls: analysis.request?.urls,
+        observationProvenance: analysis.observationProvenance,
+      },
+    });
+    navigate("survey");
+  }
   async function calculatePlan() {
     setWorking("plan");
     try {
@@ -515,7 +793,10 @@ export default function App() {
                 key={id}
                 className={page === id ? "active" : ""}
                 aria-current={page === id ? "page" : undefined}
-                onClick={() => navigate(id)}
+                onClick={() => {
+                  if (id === "survey") setManualCandidate(null);
+                  navigate(id);
+                }}
               >
                 <Icon size={18} />
                 {label}
@@ -599,8 +880,7 @@ export default function App() {
               className="query-bar"
               onSubmit={(e) => {
                 e.preventDefault();
-                void load(draft);
-                navigate("observe");
+                submitField();
               }}
             >
               <div className="query-icon">
@@ -610,36 +890,26 @@ export default function App() {
                 RIGHT ASCENSION{" "}
                 <div className="input-unit">
                   <input
-                    aria-label="Right ascension in degrees"
-                    type="number"
-                    min="0"
-                    max="359.999999"
-                    step="any"
+                    aria-label="Right ascension, degrees or hours minutes seconds"
+                    type="text"
                     required
-                    value={Number.isFinite(draft.ra) ? draft.ra : ""}
-                    onChange={(e) =>
-                      setDraft({ ...draft, ra: e.target.valueAsNumber })
-                    }
+                    value={raText}
+                    onChange={(e) => setRaText(e.target.value)}
                   />
-                  <span>deg</span>
+                  <span>ICRS</span>
                 </div>
               </label>
               <label>
                 DECLINATION{" "}
                 <div className="input-unit">
                   <input
-                    aria-label="Declination in degrees"
-                    type="number"
-                    min="-90"
-                    max="90"
-                    step="any"
+                    aria-label="Declination, decimal or sexagesimal degrees"
+                    type="text"
                     required
-                    value={Number.isFinite(draft.dec) ? draft.dec : ""}
-                    onChange={(e) =>
-                      setDraft({ ...draft, dec: e.target.valueAsNumber })
-                    }
+                    value={decText}
+                    onChange={(e) => setDecText(e.target.value)}
                   />
-                  <span>deg</span>
+                  <span>ICRS</span>
                 </div>
               </label>
               <label className="fov-input">
@@ -688,7 +958,7 @@ export default function App() {
               </button>
             </form>
             <div className="target-row">
-              <span>START WITH A KNOWN OBJECT</span>
+              <span>RECORDED NASA EXAMPLES</span>
               {TARGETS.map((t, i) => (
                 <button
                   key={t.name}
@@ -700,15 +970,78 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {inputError && (
+              <div className="load-status error" role="alert">
+                {inputError}
+              </div>
+            )}
+            {page === "observe" && (
+              <details className="archive-tools">
+                <summary>Coordinate formats and FITS fallback</summary>
+                <p>
+                  Enter ICRS decimal degrees or use sexagesimal coordinates such
+                  as <code>08h55m10.831s</code> and <code>−07d14m42.53s</code>.
+                  If archive search is unavailable, you can still request
+                  cutouts from specific exposure files.
+                </p>
+                <label className="stacked-label">
+                  Official DR1 or QR3 FITS file URLs, one per line
+                  <textarea
+                    rows={3}
+                    value={fitsText}
+                    onChange={(e) => setFitsText(e.target.value)}
+                  />
+                </label>
+                <button
+                  className="secondary"
+                  disabled={loading || !fitsText.trim()}
+                  onClick={() => {
+                    try {
+                      submitField({
+                        kind: "fits",
+                        urls: archiveFitsUrls(fitsText),
+                        label:
+                          "User-specified NASA FITS files. No archive metadata search was used.",
+                      });
+                    } catch (error) {
+                      setInputError((error as Error).message);
+                    }
+                  }}
+                >
+                  Load specified exposures
+                </button>
+              </details>
+            )}
+            {candidateContext && page !== "survey" && (
+              <div className="load-status">
+                <Radar size={15} /> Survey evidence · {candidateContext.id} ·
+                ICRS {fmt(candidateContext.ra, 6)}°,{" "}
+                {fmt(candidateContext.dec, 6)}°
+              </div>
+            )}
+            {page === "survey" && (
+              <Suspense
+                fallback={
+                  <div className="load-status">Loading survey records…</div>
+                }
+              >
+                <SurveyDesk
+                  manual={manualCandidate}
+                  onOpen={(candidate, view) => openFinding(candidate, view)}
+                />
+              </Suspense>
+            )}
             {!loading && !error && search && frames.length === 0 && (
               <div className="load-status" role="status">
                 <CircleHelp size={15} />
                 {search.observations.length
                   ? "None of the selected frames could be retrieved. Check data notes or try another detector."
-                  : "No matching observations returned. Try another detector or field."}
+                  : search.searchCoverage?.complete === false
+                    ? "The available metadata did not return a match. Some releases were unavailable, so coverage remains unknown."
+                    : "No matching observations returned. Try another detector or field."}
               </div>
             )}
-            {(loading || error) && (
+            {page !== "survey" && (loading || error) && (
               <div
                 className={`load-status ${error ? "error" : ""}`}
                 role="status"
@@ -754,7 +1087,11 @@ export default function App() {
                         {frame
                           ? search?.status === "recorded-observations"
                             ? "RECORDED NASA DATA"
-                            : "REAL OBSERVATION"
+                            : search?.status === "recorded-metadata"
+                              ? "NASA PIXELS · RECORDED INDEX"
+                              : search?.status === "partial-live"
+                                ? "NASA PIXELS · PARTIAL SEARCH"
+                                : "NASA OBSERVATION"
                           : "AWAITING DATA"}
                       </span>
                     </div>
@@ -790,6 +1127,42 @@ export default function App() {
                         </select>
                       </div>
                     </div>
+                    {frames.length > 1 && (
+                      <div className="compare-controls">
+                        <label>
+                          Reference{" "}
+                          <select
+                            aria-label="Reference observation"
+                            value={reference?.provenance.sourceUrl ?? ""}
+                            onChange={(e) => {
+                              setReferenceUrl(e.target.value);
+                              setPlaying(false);
+                            }}
+                          >
+                            {frames.map((f) => (
+                              <option
+                                key={f.provenance.sourceUrl}
+                                value={f.provenance.sourceUrl}
+                              >
+                                {date(f.metadata.mjd)} ·{" "}
+                                {fmt(f.metadata.wavelengthCenter, 3)} µm
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={matchedOnly}
+                            onChange={(e) => {
+                              setMatchedOnly(e.target.checked);
+                              setPlaying(false);
+                            }}
+                          />{" "}
+                          Near-bandpass epochs only
+                        </label>
+                      </div>
+                    )}
                     <div className={mode === "split" ? "split-view" : ""}>
                       {mode === "split" && (
                         <div>
@@ -799,7 +1172,12 @@ export default function App() {
                             contrast={contrast}
                             palette={palette}
                             scale={commonStretch}
-                            point={point}
+                            point={
+                              point ||
+                              (candidateContext && reference
+                                ? pointFor(reference)
+                                : null)
+                            }
                             onPoint={setPoint}
                           />
                           <div className="split-label">
@@ -812,11 +1190,18 @@ export default function App() {
                         <SkyCanvas
                           frame={frame}
                           reference={reference}
-                          mode={mode}
+                          mode={
+                            mode === "difference" && !comparison.eligible
+                              ? "blink"
+                              : mode
+                          }
                           contrast={contrast}
                           palette={palette}
                           scale={commonStretch}
-                          point={point}
+                          point={
+                            point ||
+                            (candidateContext && frame ? pointFor(frame) : null)
+                          }
                           onPoint={setPoint}
                         />
                         {mode === "split" && (
@@ -830,15 +1215,15 @@ export default function App() {
                       <button
                         className="play-button"
                         aria-label={playing ? "Pause blink" : "Play blink"}
-                        disabled={frames.length < 2}
+                        disabled={timeline.length < 2 || mode !== "blink"}
                         onClick={() => setPlaying(!playing)}
                       >
                         {playing ? <Pause size={18} /> : <Play size={18} />}
                       </button>
                       <div className="epoch-readout">
                         <span>
-                          OBSERVATION {frames.length ? active + 1 : 0}{" "}
-                          <i>/ {frames.length}</i>
+                          OBSERVATION {timeline.length ? active + 1 : 0}{" "}
+                          <i>/ {timeline.length}</i>
                         </span>
                         <strong>
                           {frame ? date(frame.metadata.mjd) : "No epoch loaded"}
@@ -849,21 +1234,19 @@ export default function App() {
                         aria-label="Observation epoch"
                         type="range"
                         min="0"
-                        max={Math.max(0, frames.length - 1)}
+                        max={Math.max(0, timeline.length - 1)}
                         value={active}
-                        disabled={!frames.length}
-                        onChange={(e) => {
-                          setActive(Number(e.target.value));
-                          setPlaying(false);
-                        }}
+                        disabled={!timeline.length}
+                        aria-valuetext={frame?.metadata.date}
+                        onChange={(e) => selectEpoch(Number(e.target.value))}
                       />
                       <div className="epoch-step">
                         <button
                           aria-label="Previous epoch"
-                          disabled={!frames.length}
+                          disabled={timeline.length < 2}
                           onClick={() =>
-                            setActive(
-                              (v) => (v - 1 + frames.length) % frames.length,
+                            selectEpoch(
+                              (active - 1 + timeline.length) % timeline.length,
                             )
                           }
                         >
@@ -871,9 +1254,9 @@ export default function App() {
                         </button>
                         <button
                           aria-label="Next epoch"
-                          disabled={!frames.length}
+                          disabled={timeline.length < 2}
                           onClick={() =>
-                            setActive((v) => (v + 1) % frames.length)
+                            selectEpoch((active + 1) % timeline.length)
                           }
                         >
                           <ChevronRight size={17} />
@@ -889,16 +1272,104 @@ export default function App() {
                         <option value={400}>Fast</option>
                       </select>
                     </div>
-                    {mode === "difference" && frame && reference && (
-                      <div className="comparison-note">
-                        Selected minus first · {date(frame.metadata.mjd)} −{" "}
-                        {date(reference.metadata.mjd)} · approximate centre
-                        wavelengths{" "}
-                        {fmt(Number(frame.metadata.wavelengthCenter), 3)} and{" "}
-                        {fmt(Number(reference.metadata.wavelengthCenter), 3)}{" "}
-                        µm. Instrument and wavelength differences can leave
-                        residuals.
+                    {timeline.length > 1 && (
+                      <div
+                        className="epoch-buttons"
+                        aria-label="Observation dates"
+                      >
+                        {timeline.map((f, index) => (
+                          <button
+                            key={f.provenance.sourceUrl}
+                            aria-pressed={index === active}
+                            onClick={() => selectEpoch(index)}
+                            title={f.metadata.date + " UTC"}
+                          >
+                            <strong>{date(f.metadata.mjd)}</strong>
+                            <span>
+                              {fmt(f.metadata.wavelengthCenter, 3)} µm
+                            </span>
+                          </button>
+                        ))}
                       </div>
+                    )}
+                    {mode === "difference" && (
+                      <div className="comparison-note" role="status">
+                        {comparison.eligible
+                          ? `Selected minus reference. ${comparison.reason}`
+                          : `Subtraction unavailable. Showing the selected image. ${comparison.reason}`}
+                      </div>
+                    )}
+                    {mode !== "difference" &&
+                      frame &&
+                      reference &&
+                      frame !== reference &&
+                      !comparison.eligible && (
+                        <div className="comparison-note">
+                          {comparison.reason}
+                        </div>
+                      )}
+                    {frame && (
+                      <details className="frame-origin">
+                        <summary>Selected exposure details</summary>
+                        <dl className="metadata">
+                          <div>
+                            <dt>Observation time UTC</dt>
+                            <dd>{frame.metadata.date}</dd>
+                          </div>
+                          <div>
+                            <dt>Retrieved UTC</dt>
+                            <dd>{frame.provenance.retrievedAt}</dd>
+                          </div>
+                          <div>
+                            <dt>Retrieval method</dt>
+                            <dd>{frame.provenance.method}</dd>
+                          </div>
+                          <div>
+                            <dt>Calibration</dt>
+                            <dd>
+                              {frame.metadata.calibrationVersion ||
+                                "See FITS header"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Flags present</dt>
+                            <dd>
+                              {Array.isArray(frame.metadata.flagsPresent)
+                                ? frame.metadata.flagsPresent.join(", ")
+                                : "See FITS header"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Masked pixels</dt>
+                            <dd>{fmt(frame.metadata.badFraction * 100, 1)}%</dd>
+                          </div>
+                          <div>
+                            <dt>Processing</dt>
+                            <dd>
+                              {String(
+                                frame.provenance.pipeline ||
+                                  "See exported provenance",
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Checksum</dt>
+                            <dd className="checksum">
+                              {String(
+                                frame.provenance.processedSha256 ||
+                                  frame.provenance.sha256 ||
+                                  "Unavailable",
+                              )}
+                            </dd>
+                          </div>
+                        </dl>
+                        <a
+                          className="inline-link"
+                          href={frame.provenance.sourceUrl}
+                        >
+                          Original FITS <ArrowUpRight size={13} />
+                        </a>
+                      </details>
                     )}
                     <div className="viewer-footer">
                       <span>
@@ -1246,7 +1717,10 @@ export default function App() {
                   </div>
                 </div>
                 {result ? (
-                  <ScientificResult result={result} />
+                  <ScientificResult
+                    result={result}
+                    onInvestigate={(peak) => investigatePeak(peak, result)}
+                  />
                 ) : (
                   <Empty
                     icon={<ScanLine size={32} />}
@@ -1450,7 +1924,8 @@ export default function App() {
                         <p>{n.text}</p>
                         <small>
                           {date(n.created)} · {fmt(n.ra, 4)}°, {fmt(n.dec, 4)}°
-                          · {n.sourceIds.length} source files
+                          {n.candidateId ? ` · ${n.candidateId}` : ""}·{" "}
+                          {n.sourceIds.length} source files
                         </small>
                         <button
                           className="text-button"
@@ -1614,7 +2089,13 @@ function Empty({ icon, text }: { icon: React.ReactNode; text: string }) {
     </div>
   );
 }
-function ScientificResult({ result }: { result: Result }) {
+function ScientificResult({
+  result,
+  onInvestigate,
+}: {
+  result: Result;
+  onInvestigate?: (peak: Result) => void;
+}) {
   const candidates = result.candidates || result.search?.candidates || [];
   const rows = result.measurements || [];
   return (
@@ -1680,7 +2161,18 @@ function ScientificResult({ result }: { result: Result }) {
             <tbody>
               {candidates.slice(0, 20).map((c: Result, i: number) => (
                 <tr key={i}>
-                  <td>STX-{String(i + 1).padStart(3, "0")}</td>
+                  <td>
+                    {onInvestigate ? (
+                      <button
+                        className="inline-link"
+                        onClick={() => onInvestigate(c)}
+                      >
+                        Inspect peak {i + 1} <ArrowRight size={13} />
+                      </button>
+                    ) : (
+                      `STX-${String(i + 1).padStart(3, "0")}`
+                    )}
+                  </td>
                   <td>{fmt(c.nominalSnr)}</td>
                   <td>{fmt(c.staticSnr)}</td>
                   <td>
@@ -1690,7 +2182,11 @@ function ScientificResult({ result }: { result: Result }) {
                     {fmt(c.velocityWestArcsecDay, 3)},{" "}
                     {fmt(c.velocitySouthArcsecDay, 3)} ″/d
                   </td>
-                  <td>{c.velocityWestArcsecDay || c.velocitySouthArcsecDay ? "Motion trial peak" : "Stationary trial peak"}</td>
+                  <td>
+                    {c.velocityWestArcsecDay || c.velocitySouthArcsecDay
+                      ? "Motion trial peak"
+                      : "Stationary trial peak"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1815,10 +2311,7 @@ function Methods() {
             "Gaia DR3 archive",
             "https://archive.stsci.edu/missions-and-data/gaia",
           ],
-          [
-            "Source code & reproducibility",
-            "/source.zip",
-          ],
+          ["Source code & reproducibility", "/source.zip"],
         ].map(([label, url]) => (
           <a
             key={url}

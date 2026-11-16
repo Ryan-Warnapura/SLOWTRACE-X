@@ -7,7 +7,8 @@ This document distinguishes implementation scope from validation. A UI label or 
 | Official challenge | Coordinate search, genuine SPHEREx cutouts and temporal comparison are the primary workflow |
 | Spectral exploration | Observed samples with wavelength metadata; no claim of a complete calibrated 102-channel source spectrum |
 | DeepTrace / motion search | Experimental bounded shift-and-stack; formal evidence, no calibrated discovery probability |
-| Candidate verification | Provenance, quality and competing explanations; automated catalog vetting is not implemented |
+| Automated survey | Durable field queue, processed results and candidate catalog. The public dashboard displays the latest published batch. |
+| Candidate verification | Scoped Gaia DR3 and NASA JPL checks, with separate outcomes for catalog proximity, incomplete queries, and insufficient astrometry. |
 | Experiment lab | Seeded synthetic sources on real backgrounds; empirical per-run outcomes only |
 | Follow-up planner | Implemented fixed-ICRS geometric visibility and UTC darkness calculation; 11 unit tests passed locally |
 | Citizen participation | Public observation inspection; no claim of a staffed moderation or scientific confirmation network |
@@ -27,6 +28,6 @@ Planner verification: `python -m pytest tests/test_planner.py -q` passed 11 test
 - [SPHEREx Planet X](https://github.com/epsretriever/spherex-planet-x), MIT ©2026 epsretriever: reviewed reference project; any reused metadata/source must retain its notice.
 - [SkyShift](https://github.com/Nsa-2026/skyshift), Apache-2.0: reviewed reference and source of adapted wavelength-table/quality-flag handling. See `licenses/` for the retained license.
 - [NASA/IPAC IRSA SPHEREx](https://irsa.ipac.caltech.edu/Missions/spherex.html): observational data and archive documentation.
-- Astropy, NumPy, SciPy, FastAPI, Vite, React and the listed UI packages: dependencies, not scientific endorsements.
+- Astropy, NumPy, FastAPI, Vite, React and the listed UI packages provide the application runtime.
 
 The application is an independent Space Apps project and is not endorsed by NASA, IPAC or the reference projects. Code/documentation were developed with AI assistance; observational data are supplied by the cited archive.
