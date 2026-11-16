@@ -3,8 +3,11 @@ import {
   ArrowDownToLine,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   BookOpen,
   ExternalLink,
+  Globe2,
+  Orbit,
   LoaderCircle,
   Radar,
   ShieldCheck,
@@ -18,7 +21,8 @@ import type {
   SurveySnapshot,
 } from "./surveyTypes";
 
-type View = "observe" | "trace" | "spectra" | "notebook" | "planner";
+type View =
+  "observe" | "trace" | "spectra" | "notebook" | "planner" | "atlas" | "solar";
 type Review = { time: string; interpretation: string; note: string };
 const readable = (value: string | undefined) =>
   value?.replace(/[-_]/g, " ") || "unavailable";
@@ -53,6 +57,10 @@ export default function SurveyDesk({
   );
   const [query, setQuery] = useState("");
   const [classification, setClassification] = useState("");
+  const [fieldFilter, setFieldFilter] = useState("");
+  const [sort, setSort] = useState("gain");
+  const [checkedOnly, setCheckedOnly] = useState(false);
+  const [visible, setVisible] = useState(18);
   const [screen, setScreen] = useState<"candidates" | "fields">("candidates");
   const [manualOpen, setManualOpen] = useState(Boolean(manual));
   useEffect(() => {
@@ -76,6 +84,7 @@ export default function SurveyDesk({
     const params = new URLSearchParams({ page: "survey" });
     if (id) params.set("candidate", id);
     history.replaceState(null, "", `?${params}`);
+    window.scrollTo(0, 0);
   }
   const selectedCandidate = snapshot?.candidates.find((c) => c.id === selected);
   const site =
@@ -127,11 +136,30 @@ export default function SurveyDesk({
     const field = snapshot.fields.find((f) => f.id === c.fieldId);
     return (
       (!classification || c.classification === classification) &&
+      (!fieldFilter || c.fieldId === fieldFilter) &&
+      (!checkedOnly || Boolean(c.catalogInvestigation || c.investigation)) &&
       `${c.id} ${c.fieldId} ${field?.label ?? ""} ${readable(c.classification)} ${c.ra.toFixed(5)} ${c.dec.toFixed(5)}`
         .toLowerCase()
         .includes(needle)
     );
   });
+  function speed(c: Candidate) {
+    return Math.hypot(
+      c.evidence.velocityWestArcsecDay ?? 0,
+      c.evidence.velocitySouthArcsecDay ?? 0,
+    );
+  }
+  if (sort === "motion") matches.sort((a, b) => speed(b) - speed(a));
+  if (sort === "snr")
+    matches.sort(
+      (a, b) => (b.evidence.nominalSnr ?? 0) - (a.evidence.nominalSnr ?? 0),
+    );
+  if (sort === "brightness")
+    matches.sort(
+      (a, b) =>
+        Number(b.evidence.fluxPixelSum ?? 0) -
+        Number(a.evidence.fluxPixelSum ?? 0),
+    );
   const statusOptions = [
     ...new Set(snapshot.candidates.map((c) => c.classification)),
   ];
@@ -185,7 +213,8 @@ export default function SurveyDesk({
           Processing time <strong>{fmt(summary.elapsedSeconds, 1)} s</strong>
         </span>
         <span title="Configured trial shifts times output cells, including masked cells. This is a workload count.">
-          Trial grid cells <strong>{summary.trialGridPositions?.toLocaleString() ?? "—"}</strong>
+          Trial grid cells{" "}
+          <strong>{summary.trialGridPositions?.toLocaleString() ?? "—"}</strong>
         </span>
       </div>
       <div className="survey-controls">
@@ -209,7 +238,10 @@ export default function SurveyDesk({
               aria-label="Search candidates"
               placeholder="Search ID, field or coordinates"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setVisible(18);
+                setQuery(e.target.value);
+              }}
             />
             <select
               aria-label="Candidate classification"
@@ -223,46 +255,111 @@ export default function SurveyDesk({
                 </option>
               ))}
             </select>
+            <select
+              aria-label="Survey field"
+              value={fieldFilter}
+              onChange={(e) => {
+                setVisible(18);
+                setFieldFilter(e.target.value);
+              }}
+            >
+              <option value="">All fields</option>
+              {snapshot.fields
+                .filter((f) =>
+                  snapshot.candidates.some((c) => c.fieldId === f.id),
+                )
+                .map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
+            </select>
+            <select
+              aria-label="Rank candidate peaks"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
+              <option value="gain">Rank by S/N gain</option>
+              <option value="snr">Rank by nominal S/N</option>
+              <option value="motion">Rank by trial speed</option>
+              <option value="brightness">Rank by brightness proxy</option>
+            </select>
+            <label className="catalog-filter">
+              <input
+                type="checkbox"
+                checked={checkedOnly}
+                onChange={(e) => {
+                  setVisible(18);
+                  setCheckedOnly(e.target.checked);
+                }}
+              />{" "}
+              Catalog checked
+            </label>
           </>
         )}
       </div>
       {screen === "candidates" ? (
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Candidate</th>
-                <th>ICRS position</th>
-                <th>Nominal S/N</th>
-                <th>S/N gain over stationary</th>
-                <th>Interpretation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {matches.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <button className="inline-link" onClick={() => show(c.id)}>
-                      {c.id}
-                      <ArrowRight size={13} />
-                    </button>
-                  </td>
-                  <td>
-                    {fmt(c.ra, 5)}°, {fmt(c.dec, 5)}°
-                  </td>
-                  <td>{fmt(c.evidence.nominalSnr)}</td>
-                  <td>{fmt(c.evidence.snrGainOverStatic)}</td>
-                  <td>{readable(c.classification)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div>
+          <p className="caption candidate-count">
+            {matches.length} of {snapshot.candidates.length} retained trial
+            peaks. Ranking uses nominal measurements.
+          </p>
+          <div className="candidate-gallery">
+            {matches.slice(0, visible).map((c) => (
+              <article key={c.id} className="finding-card">
+                <div className="finding-card-top">
+                  <span className="tag">
+                    D{c.detector} · {readable(c.classification)}
+                  </span>
+                  <span>
+                    {c.catalogInvestigation
+                      ? "Catalog checked"
+                      : "Review pending"}
+                  </span>
+                </div>
+                <CandidateTrack input={c} compact />
+                <h3>
+                  <button onClick={() => show(c.id)}>
+                    {c.id}
+                    <ArrowUpRight size={16} />
+                  </button>
+                </h3>
+                <p>
+                  {snapshot.fields.find((f) => f.id === c.fieldId)?.label ??
+                    "Survey field"}{" "}
+                  · {fmt(c.ra, 4)}°, {fmt(c.dec, 4)}°
+                </p>
+                <dl>
+                  <div>
+                    <dt>Nominal S/N</dt>
+                    <dd>{fmt(c.evidence.nominalSnr, 1)}</dd>
+                  </div>
+                  <div>
+                    <dt>S/N gain</dt>
+                    <dd>{fmt(c.evidence.snrGainOverStatic, 1)}</dd>
+                  </div>
+                  <div>
+                    <dt>Trial ″/day</dt>
+                    <dd>{fmt(speed(c), 3)}</dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
+          </div>
           {!matches.length && (
             <p className="caption">
               {snapshot.candidates.length
                 ? "No candidates match these filters."
-                : "No peaks passed the recorded retention criteria. Review field attempts for the evidence."}
+                : "No peaks passed the recorded retention criteria."}
             </p>
+          )}
+          {matches.length > visible && (
+            <button
+              className="secondary finding-more"
+              onClick={() => setVisible((n) => n + 18)}
+            >
+              Show more candidates <ArrowRight size={15} />
+            </button>
           )}
         </div>
       ) : (
@@ -309,6 +406,86 @@ export default function SurveyDesk({
         <pre>{JSON.stringify(snapshot.config, null, 2)}</pre>
       </details>
     </section>
+  );
+}
+
+function CandidateTrack({
+  input,
+  compact = false,
+}: {
+  input: InvestigationInput;
+  compact?: boolean;
+}) {
+  const samples = input.evidence.epochMeasurements ?? [];
+  const decScale = Math.cos((input.dec * Math.PI) / 180);
+  const offsets = samples.map((epoch) => ({
+    x: (((epoch.ra - input.ra + 540) % 360) - 180) * 3600 * decScale,
+    y: (epoch.dec - input.dec) * 3600,
+    mjd: epoch.mjd,
+  }));
+  const extent = Math.max(
+    1,
+    ...offsets.flatMap((point) => [Math.abs(point.x), Math.abs(point.y)]),
+  );
+  const coordinates = offsets.map((p) => ({
+    ...p,
+    u: 120 + (p.x / extent) * 42,
+    v: 51 - (p.y / extent) * 42,
+  }));
+  return (
+    <svg
+      className="finding-track"
+      viewBox="0 0 240 102"
+      role="img"
+      aria-label="Candidate trial direction across observed dates"
+    >
+      <path
+        d="M18 51H224 M120 7V95"
+        stroke="#587495"
+        opacity=".48"
+        strokeDasharray="3 5"
+      />
+      <path
+        d="M64 12V90 M176 12V90 M20 23H220 M20 79H220"
+        stroke="#293b58"
+        opacity=".6"
+      />
+      {!compact && (
+        <text x="8" y="15" fill="#a6bed8" fontSize="8">
+          N
+        </text>
+      )}
+      {!compact && (
+        <text x="221" y="46" fill="#a6bed8" fontSize="8">
+          E
+        </text>
+      )}
+      <polyline
+        points={coordinates.map((p) => `${p.u},${p.v}`).join(" ")}
+        fill="none"
+        stroke="#88dff4"
+        strokeWidth="1.4"
+      />
+      {coordinates.map((p, i) => (
+        <circle
+          key={i}
+          cx={p.u}
+          cy={p.v}
+          r={i === coordinates.length - 1 ? 4 : 2.7}
+          stroke="#91defa"
+          fill={i === coordinates.length - 1 ? "#9eeaff" : "#0c1e31"}
+        >
+          <title>
+            {date(p.mjd)} · east {fmt(p.x, 2)}″ · north {fmt(p.y, 2)}″
+          </title>
+        </circle>
+      ))}
+      {!compact && (
+        <text x="7" y="96" fill="#90accb" fontSize="8">
+          ± {fmt(extent, 1)} arcsec
+        </text>
+      )}
+    </svg>
   );
 }
 
@@ -431,6 +608,8 @@ function CandidateDetail({
             {(
               [
                 ["observe", "Open exact images"],
+                ["atlas", "Locate in Sky Atlas"],
+                ["solar", "View sightline in 3D"],
                 ["trace", "Open DeepTrace"],
                 ["spectra", "Open spectra"],
                 ["notebook", "Review in notebook"],
@@ -444,6 +623,10 @@ function CandidateDetail({
               >
                 {view === "observe" ? (
                   <Telescope size={15} />
+                ) : view === "atlas" ? (
+                  <Globe2 size={15} />
+                ) : view === "solar" ? (
+                  <Orbit size={15} />
                 ) : view === "notebook" ? (
                   <BookOpen size={15} />
                 ) : null}
@@ -468,6 +651,16 @@ function CandidateDetail({
         </button>
       </div>
       <h3>Observation evidence</h3>
+      {epochs.length > 1 && (
+        <div className="finding-track-detail">
+          <CandidateTrack input={input} />
+          <p className="caption">
+            Pattern evaluated at actual exposure times. East and north offsets
+            share an angular scale. The points are samples along the trial
+            track, with timestamps available on each marker.
+          </p>
+        </div>
+      )}
       <div className="table-scroll">
         <table>
           <thead>

@@ -11,6 +11,9 @@ export default function SkyCanvas({
   scale,
   point,
   onPoint,
+  overlayOpacity = 0.45,
+  quality = false,
+  track,
 }: {
   frame?: Frame;
   reference?: Frame;
@@ -19,9 +22,13 @@ export default function SkyCanvas({
   palette: string;
   scale?: [number, number];
   point: { x: number; y: number } | null;
-  onPoint: (p: { x: number; y: number }) => void;
+  onPoint?: (p: { x: number; y: number }) => void;
+  overlayOpacity?: number;
+  quality?: boolean;
+  track?: { x: number; y: number }[];
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const overlay = useRef<HTMLCanvasElement>(null);
   const holder = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
@@ -33,16 +40,58 @@ export default function SkyCanvas({
         palette,
         mode === "difference" ? reference : undefined,
         scale,
+        quality,
       );
-  }, [frame, reference, mode, contrast, palette, scale]);
+    if (overlay.current && reference)
+      renderPixels(
+        overlay.current,
+        reference,
+        contrast,
+        palette,
+        undefined,
+        scale,
+        quality,
+      );
+  }, [frame, reference, mode, contrast, palette, scale, quality]);
   return (
     <div className="sky-canvas" ref={holder}>
       {frame ? (
         <div className="image-plane" style={{ transform: `scale(${zoom})` }}>
           <canvas
             ref={canvas}
-            aria-label="NASA SPHEREx observation. Click to select a position for measurement."
+            aria-label={
+              onPoint
+                ? "NASA SPHEREx observation. Click or use arrow keys to select a pixel."
+                : "NASA SPHEREx observation"
+            }
+            tabIndex={onPoint ? 0 : undefined}
+            onKeyDown={(e) => {
+              const movement: Record<string, [number, number]> = {
+                ArrowUp: [0, -1],
+                ArrowDown: [0, 1],
+                ArrowLeft: [-1, 0],
+                ArrowRight: [1, 0],
+              };
+              const direction = movement[e.key];
+              if (!direction || !onPoint) return;
+              e.preventDefault();
+              const previous = point ?? {
+                x: Math.floor(frame.width / 2),
+                y: Math.floor(frame.height / 2),
+              };
+              onPoint({
+                x: Math.max(
+                  0,
+                  Math.min(frame.width - 1, previous.x + direction[0]),
+                ),
+                y: Math.max(
+                  0,
+                  Math.min(frame.height - 1, previous.y + direction[1]),
+                ),
+              });
+            }}
             onClick={(e) => {
+              if (!onPoint) return;
               const r = e.currentTarget.getBoundingClientRect();
               onPoint({
                 x: Math.min(
@@ -62,6 +111,40 @@ export default function SkyCanvas({
               });
             }}
           />
+          {mode === "overlay" && reference && (
+            <canvas
+              ref={overlay}
+              className="blended-exposure"
+              style={{ opacity: overlayOpacity }}
+              aria-hidden="true"
+            />
+          )}
+          {track && track.length > 1 && (
+            <svg
+              className="image-track"
+              viewBox={`0 0 ${frame.width} ${frame.height}`}
+              aria-hidden="true"
+            >
+              <polyline
+                points={track.map((p) => `${p.x + 0.5},${p.y + 0.5}`).join(" ")}
+                fill="none"
+                stroke="#a5efff"
+                strokeWidth=".4"
+                strokeDasharray="1 1"
+              />
+              {track.map((p, index) => (
+                <circle
+                  key={index}
+                  cx={p.x + 0.5}
+                  cy={p.y + 0.5}
+                  r="1.3"
+                  stroke="#98f1ff"
+                  strokeWidth=".34"
+                  fill="#16315f"
+                />
+              ))}
+            </svg>
+          )}
           {point && (
             <div
               className="source-ring"
@@ -93,7 +176,9 @@ export default function SkyCanvas({
           ? "NASA / SPHEREx · " +
             (mode === "difference"
               ? "PROCESSED DIFFERENCE"
-              : "OBSERVED INFRARED LIGHT")
+              : mode === "overlay"
+                ? "BLENDED EXPOSURES"
+                : "OBSERVED INFRARED LIGHT")
           : "ICRS · CELESTIAL COORDINATES"}
       </div>
       <div className="canvas-tools">

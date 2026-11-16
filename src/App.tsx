@@ -9,6 +9,8 @@ import {
 } from "react";
 import {
   Activity,
+  ChartNoAxesCombined,
+  Orbit,
   ArrowDownToLine,
   ArrowRight,
   ArrowUpRight,
@@ -42,13 +44,17 @@ import {
 import { Tooltip } from "@base-ui/react/tooltip";
 import { toast } from "sonner";
 import SkyCanvas from "./SkyCanvas";
+import EvidenceMaps from "./EvidenceMaps";
 const SpectrumChart = lazy(() =>
   import("./Charts").then((m) => ({ default: m.SpectrumChart })),
 );
 const PlannerChart = lazy(() =>
   import("./Charts").then((m) => ({ default: m.PlannerChart })),
 );
-import Atlas from "./Atlas";
+import MissionHome from "./MissionHome";
+const Atlas = lazy(() => import("./Atlas"));
+const Statistics = lazy(() => import("./Statistics"));
+const SolarSystem = lazy(() => import("./SolarSystem"));
 import ArchiveStatus from "./ArchiveStatus";
 import {
   archiveFitsUrls,
@@ -77,6 +83,9 @@ import { DETECTORS, TARGETS } from "./types";
 import type { Frame, Observation, Query, SearchResult } from "./types";
 
 type Page =
+  | "home"
+  | "stats"
+  | "solar"
   | "survey"
   | "observe"
   | "atlas"
@@ -97,17 +106,31 @@ type Note = {
   candidateId?: string;
 };
 type Result = Record<string, any>;
-const NAV = [
+const TOOLS = [
   { id: "observe", label: "Observation desk", icon: Telescope },
-  { id: "atlas", label: "Sky atlas", icon: Globe2 },
-  { id: "survey", label: "Survey & candidates", icon: Radar },
   { id: "trace", label: "DeepTrace search", icon: ScanLine },
   { id: "spectra", label: "Spectral explorer", icon: Waves },
   { id: "lab", label: "Experiment lab", icon: FlaskConical },
   { id: "notebook", label: "Research notebook", icon: NotebookPen },
   { id: "planner", label: "Follow-up planner", icon: Compass },
 ] as const;
+const NAV = [
+  { id: "home", label: "Mission", icon: Orbit },
+  { id: "atlas", label: "Sky Atlas", icon: Globe2 },
+  { id: "survey", label: "Discoveries", icon: Radar },
+  { id: "stats", label: "Statistics", icon: ChartNoAxesCombined },
+  { id: "solar", label: "Solar System", icon: Orbit },
+] as const;
 const TITLES: Record<Page, [string, string]> = {
+  home: ["SLOWTRACE X", "Explore real NASA SPHEREx data."],
+  stats: [
+    "Survey statistics",
+    "Explore the measured results behind the published survey.",
+  ],
+  solar: [
+    "Solar system explorer",
+    "Explore JPL ephemerides and the limits of a sightline.",
+  ],
   observe: [
     "Watch the universe change.",
     "An observation is a beginning. Follow what moves.",
@@ -149,6 +172,37 @@ type LoadSource =
   | { kind: "recorded"; path: string }
   | { kind: "fits"; urls: string[]; label: string; pixels?: number };
 type Packet = { search: SearchResult; frames: Frame[] };
+function initialPage(): Page {
+  const params = new URLSearchParams(location.search);
+  const page = params.get("page");
+  if (page && Object.prototype.hasOwnProperty.call(TITLES, page))
+    return page as Page;
+  if (params.has("ra") || params.has("evidence") || params.has("example"))
+    return "observe";
+  return "home";
+}
+type SpatialFocus = { ra: number; dec: number; label?: string; id?: string };
+function initialFocus(): SpatialFocus | undefined {
+  const params = new URLSearchParams(location.search);
+  const ra = params.get("focusRa"),
+    dec = params.get("focusDec");
+  if (ra === null || dec === null) return;
+  const x = Number(ra),
+    y = Number(dec);
+  if (
+    Number.isFinite(x) &&
+    Number.isFinite(y) &&
+    x >= 0 &&
+    x < 360 &&
+    Math.abs(y) <= 90
+  )
+    return {
+      ra: x,
+      dec: y,
+      label: params.get("focusLabel") || undefined,
+      id: params.get("focusId") || undefined,
+    };
+}
 function initialQuery(): Query {
   const p = new URLSearchParams(location.search);
   const ra = Number(p.get("ra") ?? TARGETS[0].ra),
@@ -211,11 +265,8 @@ function Notice({
 }
 
 export default function App() {
-  const [page, setPage] = useState<Page>(() =>
-      new URLSearchParams(location.search).get("page") === "survey"
-        ? "survey"
-        : "observe",
-    ),
+  const [page, setPage] = useState<Page>(initialPage),
+    [spatialFocus, setSpatialFocus] = useState(initialFocus),
     [mobile, setMobile] = useState(false),
     [query, setQuery] = useState<Query>(initialQuery),
     [draft, setDraft] = useState<Query>(initialQuery),
@@ -239,6 +290,9 @@ export default function App() {
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(900),
     [mode, setMode] = useState("blink"),
+    [qualityLayer, setQualityLayer] = useState(false),
+    [showTrack, setShowTrack] = useState(true),
+    [blend, setBlend] = useState(0.45),
     [contrast, setContrast] = useState(1),
     [palette, setPalette] = useState("ice"),
     [point, setPoint] = useState<{ x: number; y: number } | null>(null),
@@ -489,7 +543,12 @@ export default function App() {
   );
   useEffect(() => {
     const parameters = new URLSearchParams(location.search);
-    if (parameters.get("page") === "survey") return;
+    if (
+      ["home", "survey", "atlas", "stats", "solar", "methods"].includes(
+        initialPage(),
+      )
+    )
+      return;
     const query = initialQuery();
     const evidenceId = parameters.get("evidence");
     if (evidenceId) {
@@ -597,17 +656,62 @@ export default function App() {
       }),
     [frames, pointFor],
   );
-  function navigate(p: Page) {
+  function navigate(p: Page, focus?: SpatialFocus) {
     setPage(p);
-    if (p === "survey") history.replaceState(null, "", "?page=survey");
-    else if (new URLSearchParams(location.search).has("page"))
-      history.replaceState(
-        null,
-        "",
-        `?ra=${query.ra}&dec=${query.dec}&fov=${query.fov}&detector=${query.detector}`,
-      );
     setMobile(false);
     setPlaying(false);
+    const params = new URLSearchParams(location.search);
+    params.delete("candidate");
+    if (p === "home") {
+      history.pushState(null, "", "/");
+      window.scrollTo(0, 0);
+      return;
+    }
+    params.set("page", p);
+    if (p === "atlas" || p === "solar") {
+      const at =
+        focus ??
+        (candidateContext
+          ? {
+              ra: candidateContext.ra,
+              dec: candidateContext.dec,
+              label: candidateContext.id,
+              id: candidateContext.id,
+            }
+          : { ra: query.ra, dec: query.dec });
+      setSpatialFocus(at);
+      params.set("focusRa", String(at.ra));
+      params.set("focusDec", String(at.dec));
+      if (at.label) params.set("focusLabel", at.label);
+      else params.delete("focusLabel");
+      if ("id" in at && at.id) params.set("focusId", at.id);
+      else params.delete("focusId");
+    }
+    history.pushState(null, "", `?${params}`);
+    if (p !== page) window.scrollTo(0, 0);
+  }
+  function openCandidateId(id: string) {
+    setManualCandidate(null);
+    navigate("survey");
+    const params = new URLSearchParams(location.search);
+    params.set("candidate", id);
+    history.replaceState(null, "", `?${params}`);
+  }
+  function openDesk() {
+    if (candidateContext && !loading) {
+      const evidenceFiles = new Set(
+        candidateContext.observations.map((o) => o.url),
+      );
+      if (
+        !frames.length ||
+        !frames.every((f) => evidenceFiles.has(f.provenance.sourceUrl))
+      ) {
+        openFinding(candidateContext, "observe");
+        return;
+      }
+    }
+    if (!frames.length && !loading) chooseTarget(0);
+    else navigate("observe");
   }
   function chooseTarget(index: number) {
     const target = TARGETS[index];
@@ -632,6 +736,16 @@ export default function App() {
     }
   }
   function openFinding(candidate: Candidate, view: Page) {
+    if (view === "atlas" || view === "solar") {
+      setCandidateContext(candidate);
+      navigate(view, {
+        ra: candidate.ra,
+        dec: candidate.dec,
+        label: candidate.id,
+        id: candidate.id,
+      });
+      return;
+    }
     const field = candidate.field;
     const urls = candidate.observations.map((o) => o.url);
     if (field && urls.length) {
@@ -793,6 +907,29 @@ export default function App() {
       setWorking("");
     }
   }
+  useEffect(() => {
+    const pop = () => {
+      setPage(initialPage());
+      setSpatialFocus(initialFocus());
+      setPlaying(false);
+    };
+    window.addEventListener("popstate", pop);
+    return () => window.removeEventListener("popstate", pop);
+  }, []);
+  const trialPixels =
+    showTrack && frame && candidateContext?.evidence.epochMeasurements?.length
+      ? candidateContext.evidence.epochMeasurements.flatMap((epoch) => {
+          const position = skyPixel(
+            epoch.ra,
+            epoch.dec,
+            frame.width,
+            frame.height,
+            query,
+          );
+          return position ? [position] : [];
+        })
+      : undefined;
+  const researchPage = TOOLS.some((tool) => tool.id === page);
   const warnings = [...(search?.warnings || []), ...(frame?.warnings || [])];
   return (
     <Tooltip.Provider>
@@ -800,205 +937,217 @@ export default function App() {
         Skip to research workspace
       </a>
       <div className="app-shell">
-        <aside className={`sidebar ${mobile ? "open" : ""}`}>
-          <a className="brand" href="/" aria-label="SLOWTRACE X home">
-            <img src="/mark.svg" alt="" />
-            <span>
-              SLOWTRACE <b>X</b>
-              <small>THE CHANGING UNIVERSE</small>
-            </span>
-          </a>
-          <div className="workspace-label">
-            <span className="signal-dot" /> PUBLIC RESEARCH WORKSPACE
-          </div>
-          <nav aria-label="Research tools">
-            {NAV.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                className={page === id ? "active" : ""}
-                aria-current={page === id ? "page" : undefined}
-                onClick={() => {
-                  if (id === "survey") setManualCandidate(null);
-                  navigate(id);
-                }}
-              >
-                <Icon size={18} />
-                {label}
-                {id === "observe" && <span className="nav-dot" />}
-              </button>
-            ))}
-          </nav>
-          <div className="sidebar-bottom">
-            <div className="mission-card">
-              <div className="orbit-symbol" />
-              <span className="eyebrow">ONE SKY. MANY DISCOVERIES.</span>
-              <p>
-                Make the invisible
-                <br />
-                worth investigating.
-              </p>
-              <span>NASA Space Apps Challenge 2026</span>
-            </div>
+        <div className="workspace mission-workspace">
+          <header className="mission-header">
             <button
-              className={`method-link ${page === "methods" ? "active" : ""}`}
-              onClick={() => navigate("methods")}
+              className="mission-brand"
+              onClick={() => navigate("home")}
+              aria-label="SLOWTRACE X home"
             >
-              <BookOpen size={17} /> Methods & provenance{" "}
-              <ArrowUpRight size={15} />
+              <img src="/mark.svg" alt="" />
+              <span>
+                SLOWTRACE <b>X</b>
+                <small>SPHEREx RESEARCH</small>
+              </span>
             </button>
-            <a
-              className="source-link"
-              href="https://github.com/katz1nskyy/Novaryn"
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub repository <ExternalLink size={13} />
-            </a>
-          </div>
-        </aside>
-        <div className="workspace">
-          <header className="topbar">
             <button
-              className="mobile-menu icon-button"
-              aria-label="Open navigation"
+              className="mission-menu icon-button"
+              aria-expanded={mobile}
+              aria-label={mobile ? "Close navigation" : "Open navigation"}
               onClick={() => setMobile(!mobile)}
             >
-              {mobile ? <X size={20} /> : <Menu size={20} />}
+              {mobile ? <X size={21} /> : <Menu size={21} />}
             </button>
-            <div className="breadcrumb">
-              WORKSPACE <span>/</span>
-              <strong>
-                {NAV.find((n) => n.id === page)?.label ||
-                  "Methods & provenance"}
-              </strong>
-            </div>
-            <div className="topbar-right">
-              <span className="archive-status">
-                <span className="signal-dot" /> NASA OPEN DATA
-              </span>
-              <button className="text-button" onClick={report}>
-                <ArrowDownToLine size={15} /> Export evidence
+            <nav
+              aria-label="Main navigation"
+              className={`mission-nav ${mobile ? "open" : ""}`}
+            >
+              {NAV.map(({ id, label }) => (
+                <button
+                  key={id}
+                  className={page === id ? "active" : ""}
+                  aria-current={page === id ? "page" : undefined}
+                  onClick={() => {
+                    if (id === "survey") setManualCandidate(null);
+                    navigate(id);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+              <button
+                className={researchPage ? "active mobile-desk" : "mobile-desk"}
+                onClick={openDesk}
+              >
+                Observation desk
+              </button>
+              <button className="mobile-desk" onClick={() => navigate("methods")}>
+                Methods and provenance
+              </button>
+            </nav>
+            <div className="header-actions">
+              <button
+                className="icon-button"
+                aria-label="Methods and provenance"
+                title="Methods and provenance"
+                onClick={() => navigate("methods")}
+              >
+                <BookOpen size={18} />
+              </button>
+              <button
+                className={`secondary header-desk ${researchPage ? "current" : ""}`}
+                onClick={openDesk}
+              >
+                <Telescope size={16} /> Observation desk
               </button>
             </div>
           </header>
-          <main id="main">
-            <div className="page-heading">
+          {researchPage && (
+            <nav className="tool-rail" aria-label="Research tools">
               <div>
-                <div className="eyebrow">
-                  <span className="mini-cross">✦</span> SPHEREx / PLANET X
-                  RESEARCH
-                </div>
-                <h1>{TITLES[page][0]}</h1>
-                <p>{TITLES[page][1]}</p>
+                {TOOLS.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    aria-current={page === id ? "page" : undefined}
+                    onClick={() => navigate(id)}
+                  >
+                    <Icon size={15} />
+                    {label}
+                  </button>
+                ))}
               </div>
-              <div className="round-help">
-                <Hint
-                  label="Methods and limitations"
-                  onClick={() => navigate("methods")}
-                >
-                  <CircleHelp size={20} />
-                </Hint>
-              </div>
-            </div>
-            <form
-              className="query-bar"
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitField();
-              }}
-            >
-              <div className="query-icon">
-                <Crosshair size={21} />
-              </div>
-              <label>
-                RIGHT ASCENSION{" "}
-                <div className="input-unit">
-                  <input
-                    aria-label="Right ascension, degrees or hours minutes seconds"
-                    type="text"
-                    required
-                    value={raText}
-                    onChange={(e) => setRaText(e.target.value)}
-                  />
-                  <span>ICRS</span>
-                </div>
-              </label>
-              <label>
-                DECLINATION{" "}
-                <div className="input-unit">
-                  <input
-                    aria-label="Declination, decimal or sexagesimal degrees"
-                    type="text"
-                    required
-                    value={decText}
-                    onChange={(e) => setDecText(e.target.value)}
-                  />
-                  <span>ICRS</span>
-                </div>
-              </label>
-              <label className="fov-input">
-                FIELD OF VIEW
-                <select
-                  aria-label="Field of view"
-                  value={draft.fov}
-                  onChange={(e) =>
-                    setDraft({ ...draft, fov: Number(e.target.value) })
-                  }
-                >
-                  {[2, 5, 10, 15, 30].map((n) => (
-                    <option key={n} value={n}>
-                      {n} arcmin
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="detector-input">
-                DETECTOR
-                <select
-                  aria-label="Detector"
-                  value={draft.detector}
-                  onChange={(e) =>
-                    setDraft({ ...draft, detector: Number(e.target.value) })
-                  }
-                >
-                  <option value={0}>Auto · compare epochs</option>
-                  {DETECTORS.map((d, i) => (
-                    <option key={d} value={i + 1}>
-                      D{i + 1} · {d} µm
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="submit" className="primary" disabled={loading}>
-                {loading ? (
-                  <LoaderCircle className="spinner" size={17} />
-                ) : (
-                  <Search size={17} />
-                )}{" "}
-                {loading
-                  ? "Retrieving"
-                  : search?.status === "recorded-observations"
-                    ? "Search live archive"
-                    : "Explore field"}
+              <button className="text-button" onClick={report}>
+                <ArrowDownToLine size={14} /> Export evidence
               </button>
-            </form>
-            <div className="target-row">
-              <span>RECORDED NASA EXAMPLES</span>
-              {TARGETS.map((t, i) => (
-                <button
-                  key={t.name}
-                  className={target?.name === t.name ? "selected" : ""}
-                  onClick={() => chooseTarget(i)}
-                >
-                  {t.name}
-                  <ArrowUpRight size={11} />
-                </button>
-              ))}
-            </div>
-            {inputError && (
-              <div className="load-status error" role="alert">
-                {inputError}
+            </nav>
+          )}
+          <main id="main" className={`view-${page}`}>
+            {page === "home" && (
+              <MissionHome onNavigate={navigate} onExample={chooseTarget} />
+            )}
+            {page !== "home" && page !== "atlas" && (
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">
+                    <span className="mini-cross">✦</span> SPHEREx / PLANET X
+                    RESEARCH
+                  </div>
+                  <h1>{TITLES[page][0]}</h1>
+                  <p>{TITLES[page][1]}</p>
+                </div>
+                <div className="round-help">
+                  <Hint
+                    label="Methods and limitations"
+                    onClick={() => navigate("methods")}
+                  >
+                    <CircleHelp size={20} />
+                  </Hint>
+                </div>
               </div>
+            )}
+            {researchPage && (
+              <>
+                <form
+                  className="query-bar"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitField();
+                  }}
+                >
+                  <div className="query-icon">
+                    <Crosshair size={21} />
+                  </div>
+                  <label>
+                    RIGHT ASCENSION{" "}
+                    <div className="input-unit">
+                      <input
+                        aria-label="Right ascension, degrees or hours minutes seconds"
+                        type="text"
+                        required
+                        value={raText}
+                        onChange={(e) => setRaText(e.target.value)}
+                      />
+                      <span>ICRS</span>
+                    </div>
+                  </label>
+                  <label>
+                    DECLINATION{" "}
+                    <div className="input-unit">
+                      <input
+                        aria-label="Declination, decimal or sexagesimal degrees"
+                        type="text"
+                        required
+                        value={decText}
+                        onChange={(e) => setDecText(e.target.value)}
+                      />
+                      <span>ICRS</span>
+                    </div>
+                  </label>
+                  <label className="fov-input">
+                    FIELD OF VIEW
+                    <select
+                      aria-label="Field of view"
+                      value={draft.fov}
+                      onChange={(e) =>
+                        setDraft({ ...draft, fov: Number(e.target.value) })
+                      }
+                    >
+                      {[2, 5, 10, 15, 30].map((n) => (
+                        <option key={n} value={n}>
+                          {n} arcmin
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="detector-input">
+                    DETECTOR
+                    <select
+                      aria-label="Detector"
+                      value={draft.detector}
+                      onChange={(e) =>
+                        setDraft({ ...draft, detector: Number(e.target.value) })
+                      }
+                    >
+                      <option value={0}>Auto · compare epochs</option>
+                      {DETECTORS.map((d, i) => (
+                        <option key={d} value={i + 1}>
+                          D{i + 1} · {d} µm
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button type="submit" className="primary" disabled={loading}>
+                    {loading ? (
+                      <LoaderCircle className="spinner" size={17} />
+                    ) : (
+                      <Search size={17} />
+                    )}{" "}
+                    {loading
+                      ? "Retrieving"
+                      : search?.status === "recorded-observations"
+                        ? "Search live archive"
+                        : "Explore field"}
+                  </button>
+                </form>
+                <div className="target-row">
+                  <span>RECORDED NASA EXAMPLES</span>
+                  {TARGETS.map((t, i) => (
+                    <button
+                      key={t.name}
+                      className={target?.name === t.name ? "selected" : ""}
+                      onClick={() => chooseTarget(i)}
+                    >
+                      {t.name}
+                      <ArrowUpRight size={11} />
+                    </button>
+                  ))}
+                </div>
+                {inputError && (
+                  <div className="load-status error" role="alert">
+                    {inputError}
+                  </div>
+                )}
+              </>
             )}
             {page === "observe" && (
               <details className="archive-tools">
@@ -1074,7 +1223,7 @@ export default function App() {
                   onDetector={(detector) => void load({ ...query, detector })}
                 />
               )}
-            {page !== "survey" && (loading || error) && (
+            {researchPage && (loading || error) && (
               <div
                 className={`load-status ${error ? "error" : ""}`}
                 role="status"
@@ -1131,22 +1280,26 @@ export default function App() {
                     </div>
                     <div className="viewer-toolbar">
                       <div className="segmented" aria-label="Comparison mode">
-                        {["blink", "difference", "split"].map((m) => (
-                          <button
-                            key={m}
-                            className={mode === m ? "selected" : ""}
-                            onClick={() => {
-                              setMode(m);
-                              setPlaying(false);
-                            }}
-                          >
-                            {m === "blink"
-                              ? "Blink"
-                              : m === "difference"
-                                ? "Difference"
-                                : "Side by side"}
-                          </button>
-                        ))}
+                        {["blink", "split", "overlay", "difference"].map(
+                          (m) => (
+                            <button
+                              key={m}
+                              className={mode === m ? "selected" : ""}
+                              onClick={() => {
+                                setMode(m);
+                                setPlaying(false);
+                              }}
+                            >
+                              {m === "blink"
+                                ? "Blink"
+                                : m === "difference"
+                                  ? "Difference"
+                                  : m === "overlay"
+                                    ? "Overlay"
+                                    : "Side by side"}
+                            </button>
+                          ),
+                        )}
                       </div>
                       <div className="toolbar-trailing">
                         <Layers3 size={14} />
@@ -1208,6 +1361,8 @@ export default function App() {
                             contrast={contrast}
                             palette={palette}
                             scale={commonStretch}
+                            quality={qualityLayer}
+                            track={trialPixels}
                             point={
                               point ||
                               (candidateContext && reference
@@ -1234,6 +1389,9 @@ export default function App() {
                           contrast={contrast}
                           palette={palette}
                           scale={commonStretch}
+                          quality={qualityLayer}
+                          track={trialPixels}
+                          overlayOpacity={blend}
                           point={
                             point ||
                             (candidateContext && frame ? pointFor(frame) : null)
@@ -1326,6 +1484,42 @@ export default function App() {
                             </span>
                           </button>
                         ))}
+                      </div>
+                    )}
+                    {frame && (
+                      <div className="compare-controls quality-toggles">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={qualityLayer}
+                            onChange={(e) => setQualityLayer(e.target.checked)}
+                          />{" "}
+                          Highlight excluded flags
+                        </label>
+                        {candidateContext && (
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={showTrack}
+                              onChange={(e) => setShowTrack(e.target.checked)}
+                            />{" "}
+                            Show modeled trial path
+                          </label>
+                        )}
+                        {mode === "overlay" && (
+                          <label>
+                            Reference opacity{" "}
+                            <input
+                              aria-label="Reference opacity"
+                              type="range"
+                              min="0"
+                              max="1"
+                              step=".05"
+                              value={blend}
+                              onChange={(e) => setBlend(Number(e.target.value))}
+                            />
+                          </label>
+                        )}
                       </div>
                     )}
                     {mode === "difference" && (
@@ -1522,6 +1716,19 @@ export default function App() {
                       </dl>
                       <button
                         className="secondary full-width"
+                        onClick={() =>
+                          navigate("atlas", {
+                            ...selected,
+                            label: fieldName,
+                            id: candidateContext?.id,
+                          })
+                        }
+                      >
+                        <Globe2 size={16} /> Show field in Sky Atlas{" "}
+                        <ArrowUpRight size={14} />
+                      </button>
+                      <button
+                        className="secondary full-width"
                         onClick={() => navigate("trace")}
                         disabled={frames.length < 2}
                       >
@@ -1605,14 +1812,55 @@ export default function App() {
               </>
             )}
             {page === "atlas" && (
-              <Atlas
-                query={query}
-                targets={TARGETS}
-                onNavigate={(ra, dec) => {
-                  void load({ ...query, ra, dec, detector: 0 });
-                  navigate("observe");
-                }}
-              />
+              <Suspense
+                fallback={
+                  <div className="load-status">Opening celestial atlas…</div>
+                }
+              >
+                <Atlas
+                  query={query}
+                  targets={TARGETS}
+                  focus={spatialFocus}
+                  onCandidate={openCandidateId}
+                  onNavigate={(ra, dec) => {
+                    void load({ ...query, ra, dec, detector: 0 });
+                    navigate("observe");
+                  }}
+                />
+              </Suspense>
+            )}
+            {page === "stats" && (
+              <Suspense
+                fallback={
+                  <div className="load-status">
+                    Loading measured statistics…
+                  </div>
+                }
+              >
+                <Statistics
+                  onCandidate={openCandidateId}
+                  onAtlas={(ra, dec, label) =>
+                    navigate("atlas", { ra, dec, label })
+                  }
+                  onLab={() => navigate("lab")}
+                />
+              </Suspense>
+            )}
+            {page === "solar" && (
+              <Suspense
+                fallback={
+                  <div className="load-status">Loading JPL ephemerides…</div>
+                }
+              >
+                <SolarSystem
+                  focus={spatialFocus?.id ? spatialFocus : undefined}
+                  onCandidate={openCandidateId}
+                  onObserve={(ra, dec) => {
+                    void load({ ...query, ra, dec, detector: 0 });
+                    navigate("observe");
+                  }}
+                />
+              </Suspense>
             )}
             {page === "spectra" && (
               <section className="panel tool-panel">
@@ -2085,33 +2333,34 @@ export default function App() {
               </section>
             )}
             {page === "methods" && <Methods />}
-            {(warnings.length > 0 ||
-              failures.length > 0 ||
-              (search?.attempts?.length ?? 0) > 0) && (
-              <details className="warnings">
-                <summary>
-                  <CircleHelp size={14} /> Data notes and retrieval details{" "}
-                  <span>{warnings.length + failures.length}</span>
-                  <ChevronDown size={15} />
-                </summary>
-                {search?.attempts?.map((a, i) => (
-                  <p key={`lookup-${i}`}>
-                    {a.service}
-                    {a.collection ? ` / ${a.collection}` : ""} ·{" "}
-                    {a.httpStatus
-                      ? `HTTP ${a.httpStatus}`
-                      : a.code.replaceAll("-", " ")}
-                    {a.rows !== undefined ? ` · ${a.rows} metadata rows` : ""}
-                  </p>
-                ))}
-                {[...new Set(warnings)].map((w, i) => (
-                  <p key={i}>{w}</p>
-                ))}
-                {failures.map((w, i) => (
-                  <p key={`f${i}`}>{w}</p>
-                ))}
-              </details>
-            )}
+            {researchPage &&
+              (warnings.length > 0 ||
+                failures.length > 0 ||
+                (search?.attempts?.length ?? 0) > 0) && (
+                <details className="warnings">
+                  <summary>
+                    <CircleHelp size={14} /> Data notes and retrieval details{" "}
+                    <span>{warnings.length + failures.length}</span>
+                    <ChevronDown size={15} />
+                  </summary>
+                  {search?.attempts?.map((a, i) => (
+                    <p key={`lookup-${i}`}>
+                      {a.service}
+                      {a.collection ? ` / ${a.collection}` : ""} ·{" "}
+                      {a.httpStatus
+                        ? `HTTP ${a.httpStatus}`
+                        : a.code.replaceAll("-", " ")}
+                      {a.rows !== undefined ? ` · ${a.rows} metadata rows` : ""}
+                    </p>
+                  ))}
+                  {[...new Set(warnings)].map((w, i) => (
+                    <p key={i}>{w}</p>
+                  ))}
+                  {failures.map((w, i) => (
+                    <p key={`f${i}`}>{w}</p>
+                  ))}
+                </details>
+              )}
             <footer className="page-footer">
               <span>
                 <span className="signal-dot" /> REAL DATA. OPEN QUESTIONS.
@@ -2159,6 +2408,20 @@ function ScientificResult({
         <span className="tag">{result.kind || "Preliminary"}</span>
       </div>
       {result.message && <p>{result.message}</p>}
+      {Array.isArray(result.searchSnr) && (
+        <EvidenceMaps
+          key={result.referenceMjd}
+          analysis={{
+            width: Number(result.width),
+            height: Number(result.height),
+            stack: result.stack,
+            difference: result.difference,
+            searchSnr: result.searchSnr,
+            candidates: result.candidates,
+          }}
+          onPeak={onInvestigate}
+        />
+      )}
       {result.selectedFrameIndices && (
         <p className="caption">
           {result.selectedFrameIndices.length} wavelength-compatible exposures ·{" "}
@@ -2188,6 +2451,34 @@ function ScientificResult({
               Control peaks, capped at {result.controlPeakCountCappedAt}
             </span>
           </div>
+        </div>
+      )}
+      {result.recovered && (
+        <div
+          className="recovery-bars"
+          aria-label="Measured synthetic source recovery by method"
+        >
+          {(
+            [
+              ["Shift and stack", "shiftStack"],
+              ["Stationary stack", "staticStack"],
+              ["Single frame", "bestSingleFrame"],
+            ] as const
+          ).map(([label, key]) => (
+            <div key={key}>
+              <span>{label}</span>
+              <div className="recovery-bar-track">
+                <div
+                  style={{
+                    width: `${100 * Number(result.recoveryFraction?.[key] ?? 0)}%`,
+                  }}
+                />
+              </div>
+              <strong>
+                {result.recovered[key]} / {result.trials}
+              </strong>
+            </div>
+          ))}
         </div>
       )}
       {(result.notes || result.warnings || result.limitations || []).map(

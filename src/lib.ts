@@ -171,6 +171,7 @@ export function renderPixels(
   palette = "ice",
   difference?: Frame,
   scale?: [number, number],
+  quality = false,
 ) {
   canvas.width = frame.width;
   canvas.height = frame.height;
@@ -191,6 +192,8 @@ export function renderPixels(
       : (scale?.[0] ?? quantile(valid, 0.02)),
     hi = difference ? -lo : (scale?.[1] ?? quantile(valid, 0.995));
   const im = ctx.createImageData(frame.width, frame.height);
+  const excludedFlags =
+    typeof frame.metadata.maskBits === "number" ? frame.metadata.maskBits : 0;
   for (let i = 0; i < values.length; i++) {
     const v = values[i];
     let c = [9, 14, 17];
@@ -212,6 +215,13 @@ export function renderPixels(
           22 + 226 * Math.pow(t, 0.8),
         ];
       }
+    }
+    if (
+      quality &&
+      (frame.mask[i] & excludedFlags ||
+        (difference && difference.data[i] === null))
+    ) {
+      c = [125 + c[0] * 0.28, 57 + c[1] * 0.24, 163 + c[2] * 0.3];
     }
     im.data.set([...c, 255], i * 4);
   }

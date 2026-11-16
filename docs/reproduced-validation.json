@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-11-15T21:06:02.066800+00:00",
+  "runAt": "2026-11-16T02:49:36.405175+00:00",
   "recordedAt": "2026-11-15T21:00:21.660801+00:00",
   "frames": 8,
   "selectedFrameIndices": [
@@ -266,6 +266,890 @@
       "method": "IRSA cutout",
       "pipeline": "IMAGE minus ZODI; bad-pixel masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
       "processedSha256": "62efe632edd7f6b634e697ee7a867bf15a95f0313c785ea6566b046e445b2b6d"
+    }
+  ],
+  "liveTargets": [
+    {
+      "target": "barnard",
+      "status": "pass",
+      "searchStatus": "recorded-metadata",
+      "warnings": [
+        "Some exposures were located in the recorded NASA FITS header sample. The sample does not establish complete archive coverage. Pixels are retrieved separately.",
+        "Search includes a recorded IRSA observation list from SkyShift, checked 2026-11-14. Pixel data are retrieved separately.",
+        "One or more IRSA release searches could not be completed; the listed coverage is incomplete.",
+        "Showing a time-stratified sample of 4 out of 60 identified observations."
+      ],
+      "frames": [
+        {
+          "metadata": {
+            "id": "2025W35_1A_0432_4",
+            "detector": 1,
+            "mjd": 60914.213196455,
+            "date": "2025-08-27T05:07:00.173712+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 269.4462,
+              "dec": 4.76883
+            },
+            "wavelengthCenter": 0.7502505275563587,
+            "bandwidthCenter": 0.018072969819309125,
+            "wavelengthMin": 0.7464763414042241,
+            "wavelengthMax": 0.7540315038698568,
+            "badFraction": 0.04345703125,
+            "saturatedFraction": 0.00341796875,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "OVERFLOW",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "PERSIST",
+              "SOURCE",
+              "BLOOM",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 123,
+              "OVERFLOW": 14,
+              "SUR_ERROR": 95,
+              "NONFUNC": 21,
+              "MISSING_DATA": 178,
+              "COLD": 10,
+              "PERSIST": 6,
+              "SOURCE": 4096,
+              "BLOOM": 72,
+              "HALO": 83
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                -3095.4240565934265,
+                -6306.5950079115755,
+                -409.8553892246773
+              ],
+              "velocityKmS": [
+                -0.7666451276390926,
+                0.8430579058275507,
+                -7.438387312116563
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 60914.213196455,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 60914.212530266,
+            "endMjd": 60914.213862645
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0432_4D1_spx_l2b-v27-2026-230.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0432_4D1_spx_l2b-v27-2026-230.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W35_1A/l2b-v27-2026-230/1/level2_2025W35_1A_0432_4D1_spx_l2b-v27-2026-230.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:50:01.654050+00:00",
+            "sha256": "40cbc07107fd63ea4684e9e899f275d3040946282bbee8998cf3d7031db60578",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "43e1ee6d16e94c68b792666a4c6597c79d3c1c899880c90df3a45e54bf68c7fa"
+          },
+          "validPixels": 3918
+        },
+        {
+          "metadata": {
+            "id": "2026W36_1A_0510_1",
+            "detector": 1,
+            "mjd": 61285.257702231,
+            "date": "2026-09-02T06:11:05.472758+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 269.4462,
+              "dec": 4.76883
+            },
+            "wavelengthCenter": 0.7585063734881515,
+            "bandwidthCenter": 0.018525297205613432,
+            "wavelengthMin": 0.7548677427200756,
+            "wavelengthMax": 0.7621447595436448,
+            "badFraction": 0.04296875,
+            "saturatedFraction": 0.003662109375,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "OVERFLOW",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "CROSSTALK",
+              "SOURCE",
+              "BLOOM",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 144,
+              "OVERFLOW": 15,
+              "SUR_ERROR": 110,
+              "NONFUNC": 50,
+              "MISSING_DATA": 176,
+              "COLD": 18,
+              "CROSSTALK": 16,
+              "SOURCE": 4096,
+              "BLOOM": 85,
+              "HALO": 33
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                -2190.161234447251,
+                -6333.21166884694,
+                2130.43552261714
+              ],
+              "velocityKmS": [
+                -1.7905336664151703,
+                -1.7736796048786978,
+                -7.093900816740725
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 61285.257702231,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 61285.257036042,
+            "endMjd": 61285.25836842
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W36_1A/l2b-v27-2026-252/1/level2_2026W36_1A_0510_1D1_spx_l2b-v27-2026-252.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/qr3/level2/2026W36_1A/l2b-v27-2026-252/1/level2_2026W36_1A_0510_1D1_spx_l2b-v27-2026-252.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W36_1A/l2b-v27-2026-252/1/level2_2026W36_1A_0510_1D1_spx_l2b-v27-2026-252.fits?center=269.446200000%2C4.768830000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:50:01.815458+00:00",
+            "sha256": "157478947d4d0ab9266342b08877b1ea5b3be5e200a55cf929d77ed9674fc7bb",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "74ca8731a17f96ac93194f53f0d8b06cb3fda4e060099b88eee66d4b149e8359"
+          },
+          "validPixels": 3920
+        }
+      ]
+    },
+    {
+      "target": "epsindib",
+      "status": "pass",
+      "searchStatus": "partial-live",
+      "warnings": [
+        "Some exposures were located in the recorded NASA FITS header sample. The sample does not establish complete archive coverage. Pixels are retrieved separately.",
+        "Search includes a recorded IRSA observation list from SkyShift, checked 2026-11-14. Pixel data are retrieved separately.",
+        "One or more IRSA release searches could not be completed; the listed coverage is incomplete.",
+        "Showing a time-stratified sample of 4 out of 46 identified observations."
+      ],
+      "frames": [
+        {
+          "metadata": {
+            "id": "2025W17_4B_0077_3",
+            "detector": 1,
+            "mjd": 60790.26312899,
+            "date": "2025-04-25T06:18:54.344736+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 331.09668,
+              "dec": -56.80067
+            },
+            "wavelengthCenter": 0.7564696629097399,
+            "bandwidthCenter": 0.017706551311589783,
+            "wavelengthMin": 0.7516431255742044,
+            "wavelengthMax": 0.7612943248144698,
+            "badFraction": 0.234375,
+            "saturatedFraction": 0.0,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "PERSIST",
+              "SOURCE",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 464,
+              "SUR_ERROR": 159,
+              "NONFUNC": 35,
+              "MISSING_DATA": 960,
+              "COLD": 5,
+              "PERSIST": 19,
+              "SOURCE": 4096,
+              "HALO": 930
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                3390.9953658753634,
+                -4060.273864086231,
+                -4649.610339033184
+              ],
+              "velocityKmS": [
+                2.075750989755573,
+                -4.614134595943583,
+                5.5569067308941476
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 60790.26312899,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 60790.262462801,
+            "endMjd": 60790.263795179
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W17_4B/l2b-v27-2026-196/1/level2_2025W17_4B_0077_3D1_spx_l2b-v27-2026-196.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2025W17_4B/l2b-v27-2026-196/1/level2_2025W17_4B_0077_3D1_spx_l2b-v27-2026-196.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W17_4B/l2b-v27-2026-196/1/level2_2025W17_4B_0077_3D1_spx_l2b-v27-2026-196.fits?center=331.096680000%2C-56.800670000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:50:27.297770+00:00",
+            "sha256": "294eb0d86d153ddefaf6ed07822c8ffede283c4289a361aec9f37f02a2161239",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "48468d8c4fcaff3fcc014f2fbba4cefbae7b69b1a237dd6ff88b20c2280ef124"
+          },
+          "validPixels": 3136
+        },
+        {
+          "metadata": {
+            "id": "2026W18_2A_0819_1",
+            "detector": 1,
+            "mjd": 61163.718313365,
+            "date": "2026-05-03T17:14:22.274736+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 331.09668,
+              "dec": -56.80067
+            },
+            "wavelengthCenter": 1.0665306022864554,
+            "bandwidthCenter": 0.028718834926630157,
+            "wavelengthMin": 1.059061902485409,
+            "wavelengthMax": 1.0740005982808658,
+            "badFraction": 0.102783203125,
+            "saturatedFraction": 0.0,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "CROSSTALK",
+              "SOURCE",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 169,
+              "SUR_ERROR": 137,
+              "NONFUNC": 37,
+              "MISSING_DATA": 421,
+              "COLD": 13,
+              "CROSSTALK": 69,
+              "SOURCE": 4096,
+              "HALO": 329
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                4348.5145929784685,
+                -4752.923110306287,
+                -2801.8869849364282
+              ],
+              "velocityKmS": [
+                1.1755846311630112,
+                -2.9452778042334993,
+                6.835422718962023
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 61163.718313365,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 61163.717647176,
+            "endMjd": 61163.718979554
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W18_2A/l2b-v27-2026-244/1/level2_2026W18_2A_0819_1D1_spx_l2b-v27-2026-244.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2026W18_2A/l2b-v27-2026-244/1/level2_2026W18_2A_0819_1D1_spx_l2b-v27-2026-244.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W18_2A/l2b-v27-2026-244/1/level2_2026W18_2A_0819_1D1_spx_l2b-v27-2026-244.fits?center=331.096680000%2C-56.800670000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:50:27.364452+00:00",
+            "sha256": "3bdfc5ff59cb055b9cb5fc603ad1f65ffd006bbe653b625b1a9320b75b651833",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "7b89ade5f9311a383bd4fbbb9213c7fffbb2677e77eee44dc21cd4efb0ee1d85"
+          },
+          "validPixels": 3675
+        }
+      ]
+    },
+    {
+      "target": "wise0855",
+      "status": "pass",
+      "searchStatus": "recorded-metadata",
+      "warnings": [
+        "Some exposures were located in the recorded NASA FITS header sample. The sample does not establish complete archive coverage. Pixels are retrieved separately.",
+        "Search includes a recorded IRSA observation list from SkyShift, checked 2026-11-14. Pixel data are retrieved separately.",
+        "One or more IRSA release searches could not be completed; the listed coverage is incomplete.",
+        "Showing a time-stratified sample of 4 out of 36 identified observations."
+      ],
+      "frames": [
+        {
+          "metadata": {
+            "id": "2025W19_1B_0241_1",
+            "detector": 1,
+            "mjd": 60801.514843134,
+            "date": "2025-05-06T12:21:22.446778+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 133.75969,
+              "dec": -7.24216
+            },
+            "wavelengthCenter": 0.9926265784366342,
+            "bandwidthCenter": 0.026346462003780716,
+            "wavelengthMin": 0.9867390530901884,
+            "wavelengthMax": 0.9987697708860009,
+            "badFraction": 0.059326171875,
+            "saturatedFraction": 0.0,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "PERSIST",
+              "OUTLIER",
+              "SOURCE",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 97,
+              "SUR_ERROR": 67,
+              "NONFUNC": 46,
+              "MISSING_DATA": 243,
+              "COLD": 14,
+              "PERSIST": 25,
+              "OUTLIER": 241,
+              "SOURCE": 2082,
+              "HALO": 180
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                -4872.155983411921,
+                5077.174130745679,
+                -98.76791097103671
+              ],
+              "velocityKmS": [
+                0.8029197061408535,
+                0.6472880024506205,
+                -7.454348935182686
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 60801.514843134,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 60801.514176944,
+            "endMjd": 60801.515509323
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W19_1B/l2b-v27-2026-197/1/level2_2025W19_1B_0241_1D1_spx_l2b-v27-2026-197.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2025W19_1B/l2b-v27-2026-197/1/level2_2025W19_1B_0241_1D1_spx_l2b-v27-2026-197.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W19_1B/l2b-v27-2026-197/1/level2_2025W19_1B_0241_1D1_spx_l2b-v27-2026-197.fits?center=133.759690000%2C-7.242160000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:50:42.341051+00:00",
+            "sha256": "bc06dd4742e8db4cfc4cea7323130187dc5d5c56de228328e3cdaadde992cd2c",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "cd762385e715a0d2f567856576c7dfe993e4146e8f1fed985f24ffc7cffd11f9"
+          },
+          "validPixels": 3853
+        },
+        {
+          "metadata": {
+            "id": "2026W19_1A_0594_2",
+            "detector": 1,
+            "mjd": 61165.590808979,
+            "date": "2026-05-05T14:10:45.895786+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 133.75969,
+              "dec": -7.24216
+            },
+            "wavelengthCenter": 0.9621508358070421,
+            "bandwidthCenter": 0.024761730529908654,
+            "wavelengthMin": 0.9561652426498213,
+            "wavelengthMax": 0.9681366184906186,
+            "badFraction": 0.054443359375,
+            "saturatedFraction": 0.0,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "OUTLIER",
+              "SOURCE",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 84,
+              "SUR_ERROR": 74,
+              "NONFUNC": 44,
+              "MISSING_DATA": 223,
+              "COLD": 21,
+              "OUTLIER": 250,
+              "SOURCE": 2091,
+              "HALO": 189
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                -4490.487216701303,
+                5359.059623802063,
+                -792.757995246498
+              ],
+              "velocityKmS": [
+                1.3286459957681485,
+                0.022541110185431396,
+                -7.406016893553017
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 61165.590808979,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 61165.590142789,
+            "endMjd": 61165.591475168
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W19_1A/l2b-v27-2026-245/1/level2_2026W19_1A_0594_2D1_spx_l2b-v27-2026-245.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2026W19_1A/l2b-v27-2026-245/1/level2_2026W19_1A_0594_2D1_spx_l2b-v27-2026-245.fits",
+            "cutoutUrl": null,
+            "retrievedAt": "2026-11-16T02:50:44.010458+00:00",
+            "sha256": null,
+            "method": "NASA public S3 range reads",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "21027ca32a2567e345e27e9176cad23ae622c335ec04876acf1b4c42062860a4"
+          },
+          "validPixels": 3873
+        }
+      ]
+    },
+    {
+      "target": "rwaur",
+      "status": "pass",
+      "searchStatus": "recorded-metadata",
+      "warnings": [
+        "Some exposures were located in the recorded NASA FITS header sample. The sample does not establish complete archive coverage. Pixels are retrieved separately.",
+        "Search includes a recorded IRSA observation list from SkyShift, checked 2026-11-14. Pixel data are retrieved separately.",
+        "One or more IRSA release searches could not be completed; the listed coverage is incomplete.",
+        "Showing a time-stratified sample of 4 out of 56 identified observations."
+      ],
+      "frames": [
+        {
+          "metadata": {
+            "id": "2025W36_1A_0095_1",
+            "detector": 1,
+            "mjd": 60919.420312786,
+            "date": "2025-09-01T10:05:15.024711+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 76.95609,
+              "dec": 30.40113
+            },
+            "wavelengthCenter": 1.0683455490175842,
+            "bandwidthCenter": 0.028264122169450387,
+            "wavelengthMin": 1.0622153597462443,
+            "wavelengthMax": 1.0746694111097592,
+            "badFraction": 0.092529296875,
+            "saturatedFraction": 0.0,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "PERSIST",
+              "OUTLIER",
+              "CROSSTALK",
+              "SOURCE",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 74,
+              "SUR_ERROR": 61,
+              "NONFUNC": 24,
+              "MISSING_DATA": 379,
+              "COLD": 15,
+              "PERSIST": 9,
+              "OUTLIER": 98,
+              "CROSSTALK": 247,
+              "SOURCE": 3655,
+              "HALO": 141
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                2016.6814738515905,
+                2925.6395048546633,
+                6049.340623789201
+              ],
+              "velocityKmS": [
+                -1.8198831342813553,
+                -6.333920596246535,
+                3.6647981521260817
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 60919.420312786,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 60919.419646597,
+            "endMjd": 60919.420978976
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W36_1A/l2b-v27-2026-232/1/level2_2025W36_1A_0095_1D1_spx_l2b-v27-2026-232.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2025W36_1A/l2b-v27-2026-232/1/level2_2025W36_1A_0095_1D1_spx_l2b-v27-2026-232.fits",
+            "cutoutUrl": null,
+            "retrievedAt": "2026-11-16T02:50:48.069548+00:00",
+            "sha256": null,
+            "method": "NASA public S3 range reads",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "cd9d130d9cd5c598a6263265367592f618766c13cfe3650611a3ff7011059d38"
+          },
+          "validPixels": 3717
+        },
+        {
+          "metadata": {
+            "id": "2026W37_1A_0524_1",
+            "detector": 1,
+            "mjd": 61292.904993458,
+            "date": "2026-09-09T21:43:11.434772+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 76.95609,
+              "dec": 30.40113
+            },
+            "wavelengthCenter": 0.9743917330809659,
+            "bandwidthCenter": 0.02539323981907024,
+            "wavelengthMin": 0.9687811119889307,
+            "wavelengthMax": 0.9800903987536939,
+            "badFraction": 0.176513671875,
+            "saturatedFraction": 0.003662109375,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "OVERFLOW",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "COLD",
+              "PERSIST",
+              "OUTLIER",
+              "CROSSTALK",
+              "SOURCE",
+              "BLOOM",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 238,
+              "OVERFLOW": 15,
+              "SUR_ERROR": 174,
+              "NONFUNC": 53,
+              "MISSING_DATA": 723,
+              "COLD": 4,
+              "PERSIST": 16,
+              "OUTLIER": 91,
+              "CROSSTALK": 181,
+              "SOURCE": 3643,
+              "BLOOM": 11,
+              "HALO": 508
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                1916.2310447848154,
+                4859.454914642263,
+                4698.092256423002
+              ],
+              "velocityKmS": [
+                -0.4867220380754695,
+                -5.126237233468262,
+                5.495932945024038
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 61292.904993458,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 61292.904327269,
+            "endMjd": 61292.905659647
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W37_1A/l2b-v27-2026-255/1/level2_2026W37_1A_0524_1D1_spx_l2b-v27-2026-255.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/qr3/level2/2026W37_1A/l2b-v27-2026-255/1/level2_2026W37_1A_0524_1D1_spx_l2b-v27-2026-255.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W37_1A/l2b-v27-2026-255/1/level2_2026W37_1A_0524_1D1_spx_l2b-v27-2026-255.fits?center=76.956090000%2C30.401130000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:50:46.597271+00:00",
+            "sha256": "965b4a2931f7eb8e4bff0c27793f6e15a08c3d4a99cc06518cf9ec67d8a6fdfc",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "d242179ba600f8ec324d39a69937322ac24b4f9b53308f2d54544025340b9dfd"
+          },
+          "validPixels": 3373
+        }
+      ]
+    },
+    {
+      "target": "rdra",
+      "status": "pass",
+      "searchStatus": "live",
+      "warnings": [
+        "Showing a time-stratified sample of 4 out of 584 identified observations."
+      ],
+      "frames": [
+        {
+          "metadata": {
+            "id": "2025W23_2B_0206_1",
+            "detector": 1,
+            "mjd": 60832.474553631,
+            "date": "2025-06-06T11:23:21.433718+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 248.16723,
+              "dec": 66.75502
+            },
+            "wavelengthCenter": 0.9436033046774529,
+            "bandwidthCenter": 0.02413596996223443,
+            "wavelengthMin": 0.937753254102742,
+            "wavelengthMax": 0.9499206179822878,
+            "badFraction": 0.169677734375,
+            "saturatedFraction": 0.01416015625,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "OVERFLOW",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "PERSIST",
+              "CROSSTALK",
+              "SOURCE",
+              "BLOOM",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 296,
+              "OVERFLOW": 58,
+              "SUR_ERROR": 236,
+              "NONFUNC": 43,
+              "MISSING_DATA": 695,
+              "PERSIST": 87,
+              "CROSSTALK": 253,
+              "SOURCE": 4096,
+              "BLOOM": 252,
+              "HALO": 80
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                750.7388290879096,
+                -1206.3006880138464,
+                6880.539719302694
+              ],
+              "velocityKmS": [
+                -7.205653599306538,
+                1.8710244357917523,
+                1.1186258844278518
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 60832.474553631,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 60832.473887442,
+            "endMjd": 60832.475219821
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W23_2B/l2b-v27-2026-201/1/level2_2025W23_2B_0206_1D1_spx_l2b-v27-2026-201.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/level2/2025W23_2B/l2b-v27-2026-201/1/level2_2025W23_2B_0206_1D1_spx_l2b-v27-2026-201.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W23_2B/l2b-v27-2026-201/1/level2_2025W23_2B_0206_1D1_spx_l2b-v27-2026-201.fits?center=248.167230000%2C66.755020000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:51:11.176275+00:00",
+            "sha256": "8a851875b5b9eca7b23a55d0344e26e1ce2d914a183b656e6a07c252d553a9dc",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "80f884976503a1c4cb2d749d39d581cc1322e7343824fee17a01083faf0da69d"
+          },
+          "validPixels": 3401
+        },
+        {
+          "metadata": {
+            "id": "2026W39_2A_0591_1",
+            "detector": 1,
+            "mjd": 61310.29184134,
+            "date": "2026-09-27T07:00:15.091776+00:00",
+            "unit": "MJy / sr",
+            "pixelArcsec": 4.6875,
+            "center": {
+              "ra": 248.16723,
+              "dec": 66.75502
+            },
+            "wavelengthCenter": 1.11338085494397,
+            "bandwidthCenter": 0.030140829666405494,
+            "wavelengthMin": 1.106141943250683,
+            "wavelengthMax": 1.1147625864973394,
+            "badFraction": 0.444091796875,
+            "saturatedFraction": 0.01025390625,
+            "zodiSubtracted": true,
+            "calibrationVersion": "7.0.5",
+            "psfAvailable": true,
+            "psfMatched": false,
+            "maskBits": 1070780103,
+            "flagsPresent": [
+              "TRANSIENT",
+              "OVERFLOW",
+              "SUR_ERROR",
+              "NONFUNC",
+              "MISSING_DATA",
+              "PERSIST",
+              "CROSSTALK",
+              "SOURCE",
+              "BLOOM",
+              "HALO"
+            ],
+            "flagPixelCounts": {
+              "TRANSIENT": 179,
+              "OVERFLOW": 42,
+              "SUR_ERROR": 144,
+              "NONFUNC": 14,
+              "MISSING_DATA": 1819,
+              "PERSIST": 8,
+              "CROSSTALK": 131,
+              "SOURCE": 2788,
+              "BLOOM": 128,
+              "HALO": 167
+            },
+            "centerPixelX": 31.5,
+            "centerPixelY": 31.5,
+            "fineAstrometryFlag": 0,
+            "l1Quality": "Pass",
+            "observerState": {
+              "positionKm": [
+                1041.2944274680644,
+                -1342.307134311454,
+                6812.855133649181
+              ],
+              "velocityKmS": [
+                0.1655166356514996,
+                -7.381283166279238,
+                -1.4832081499213732
+              ],
+              "origin": "GEOCENTER",
+              "frame": null,
+              "epochMjd": 61310.29184134,
+              "source": "SPHEREx Level 2 IMAGE FITS header"
+            },
+            "startMjd": 61310.29117515,
+            "endMjd": 61310.292507529
+          },
+          "provenance": {
+            "sourceUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W39_2A/l2b-v27-2026-271/1/level2_2026W39_2A_0591_1D1_spx_l2b-v27-2026-271.fits",
+            "cloudUrl": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/qr3/level2/2026W39_2A/l2b-v27-2026-271/1/level2_2026W39_2A_0591_1D1_spx_l2b-v27-2026-271.fits",
+            "cutoutUrl": "https://irsa.ipac.caltech.edu/ibe/data/spherex/qr3/level2/2026W39_2A/l2b-v27-2026-271/1/level2_2026W39_2A_0591_1D1_spx_l2b-v27-2026-271.fits?center=248.167230000%2C66.755020000&size=0.12500000",
+            "retrievedAt": "2026-11-16T02:51:15.174309+00:00",
+            "sha256": "a9628a7e53a270025d8ce66f7d4cda63309f91749fdb7c66bc1d43626f81f9d4",
+            "method": "IRSA cutout",
+            "pipelineVersion": "archive-1.1",
+            "pipeline": "IMAGE minus ZODI; SPHEREx quality masking; celestial TAN-SIP to common TAN grid; bilinear sampling",
+            "processedSha256": "131f1b27dca9567d64281a0c7a4a9f405d9b97d4cb4f35dbb06c8b62c894ee69"
+          },
+          "validPixels": 2277
+        }
+      ]
     }
   ]
 }
