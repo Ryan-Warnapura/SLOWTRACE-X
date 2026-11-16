@@ -151,6 +151,12 @@ export default function MissionHome({
             palette="ice"
             scale={scale}
             point={null}
+            caption={
+              <>
+                <span className="signal-dot" /> NASA / SPHEREx · OBSERVED
+                INFRARED LIGHT
+              </>
+            }
           />
           <div className="mission-demo-controls">
             {frames.map((item, index) => (

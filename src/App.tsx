@@ -116,10 +116,18 @@ const TOOLS = [
   { id: "planner", label: "Follow-up planner", icon: Compass },
 ] as const;
 const NAV = [
+  { id: "home", label: "Mission" },
   { id: "observe", label: "Observe" },
   { id: "atlas", label: "Sky Atlas" },
   { id: "spectra", label: "Spectra" },
   { id: "survey", label: "Discoveries" },
+] as const;
+const MISSION_NAV = [
+  { id: "home", label: "Mission" },
+  { id: "atlas", label: "Sky Atlas" },
+  { id: "survey", label: "Discoveries" },
+  { id: "stats", label: "Statistics" },
+  { id: "solar", label: "Solar System" },
 ] as const;
 const MORE = [
   { id: "trace", label: "DeepTrace" },
@@ -128,7 +136,6 @@ const MORE = [
   { id: "planner", label: "Planner" },
   { id: "stats", label: "Statistics" },
   { id: "solar", label: "Solar System" },
-  { id: "home", label: "Mission" },
   { id: "methods", label: "Methods" },
 ] as const;
 const TITLES: Record<Page, [string, string]> = {
@@ -162,9 +169,9 @@ function initialPage(): Page {
   const page = params.get("page");
   if (page && Object.prototype.hasOwnProperty.call(TITLES, page))
     return page as Page;
-  if (params.has("ra") || params.has("evidence") || params.has("example"))
+  if (["ra", "dec", "evidence", "example"].some((key) => params.has(key)))
     return "observe";
-  return "observe";
+  return "home";
 }
 type SpatialFocus = { ra: number; dec: number; label?: string; id?: string };
 function initialFocus(): SpatialFocus | undefined {
@@ -246,6 +253,76 @@ function Notice({
       <CircleHelp size={16} />
       <div>{children}</div>
     </div>
+  );
+}
+
+function MissionHeader({
+  mobile,
+  toggleMenu,
+  go,
+}: {
+  mobile: boolean;
+  toggleMenu: () => void;
+  go: (page: Page) => void;
+}) {
+  return (
+    <header className="mission-header">
+      <button
+        className="mission-brand"
+        onClick={() => go("home")}
+        aria-label="SLOWTRACE X home"
+      >
+        <img src="/mark.svg" alt="" />
+        <span>
+          SLOWTRACE <b>X</b>
+          <small>SPHEREx RESEARCH</small>
+        </span>
+      </button>
+      <button
+        className="mission-menu icon-button"
+        aria-expanded={mobile}
+        aria-controls="mission-navigation"
+        aria-label={mobile ? "Close navigation" : "Open navigation"}
+        onClick={toggleMenu}
+      >
+        {mobile ? <X size={21} /> : <Menu size={21} />}
+      </button>
+      <nav
+        id="mission-navigation"
+        aria-label="Main navigation"
+        className={`mission-nav ${mobile ? "open" : ""}`}
+      >
+        {MISSION_NAV.map(({ id, label }) => (
+          <button
+            key={id}
+            className={id === "home" ? "active" : ""}
+            aria-current={id === "home" ? "page" : undefined}
+            onClick={() => go(id)}
+          >
+            {label}
+          </button>
+        ))}
+        <button className="mobile-desk" onClick={() => go("observe")}>
+          Observation desk
+        </button>
+        <button className="mobile-desk" onClick={() => go("methods")}>
+          Methods and provenance
+        </button>
+      </nav>
+      <div className="header-actions">
+        <button
+          className="icon-button"
+          aria-label="Methods and provenance"
+          title="Methods and provenance"
+          onClick={() => go("methods")}
+        >
+          <BookOpen size={18} />
+        </button>
+        <button className="secondary header-desk" onClick={() => go("observe")}>
+          <Telescope size={16} /> Observation desk
+        </button>
+      </div>
+    </header>
   );
 }
 
@@ -686,6 +763,12 @@ export default function App() {
     const params = new URLSearchParams(location.search);
     params.delete("candidate");
     setMoreOpen(false);
+    if (p === "home") {
+      if (page !== "home" || location.search || location.hash)
+        history.pushState(null, "", "/");
+      window.scrollTo(0, 0);
+      return;
+    }
     params.set("page", p);
     if (p === "atlas" || p === "solar") {
       const at =
@@ -957,62 +1040,72 @@ export default function App() {
         Skip to content
       </a>
       <div className="app-shell">
-        <div className="workspace mission-workspace">
-          <header className="navbar">
-            <button
-              className="navbar-brand"
-              onClick={() => go("observe")}
-              aria-label="SLOWTRACE X, observe"
-            >
-              <img src="/mark.svg" alt="" />
-              SLOWTRACE X
-            </button>
-            <button
-              className="navbar-menu"
-              aria-expanded={mobile}
-              aria-label={mobile ? "Close navigation" : "Open navigation"}
-              onClick={() => setMobile(!mobile)}
-            >
-              {mobile ? <X size={18} /> : <Menu size={18} />}
-            </button>
-            <nav
-              aria-label="Main navigation"
-              className={`navbar-nav ${mobile ? "open" : ""}`}
-            >
-              {NAV.map(({ id, label }) => (
-                <button
-                  key={id}
-                  className={page === id ? "active" : ""}
-                  aria-current={page === id ? "page" : undefined}
-                  onClick={() => go(id)}
-                >
-                  {label}
-                </button>
-              ))}
-              <div className="navbar-more">
-                <button
-                  className={MORE.some((m) => m.id === page) ? "active" : ""}
-                  aria-haspopup="true"
-                  aria-expanded={moreOpen}
-                  onClick={() => setMoreOpen(!moreOpen)}
-                >
-                  More <ChevronDown size={14} />
-                </button>
-                <div className={`navbar-more-menu ${moreOpen ? "open" : ""}`}>
-                  {MORE.map(({ id, label }) => (
-                    <button
-                      key={id}
-                      className={page === id ? "active" : ""}
-                      aria-current={page === id ? "page" : undefined}
-                      onClick={() => go(id)}
-                    >
-                      {label}
-                    </button>
-                  ))}
+        <div
+          className={`workspace mission-workspace${page === "home" ? " is-mission" : ""}`}
+        >
+          {page === "home" ? (
+            <MissionHeader
+              mobile={mobile}
+              toggleMenu={() => setMobile(!mobile)}
+              go={go}
+            />
+          ) : (
+            <header className="navbar">
+              <button
+                className="navbar-brand"
+                onClick={() => go("home")}
+                aria-label="SLOWTRACE X home"
+              >
+                <img src="/mark.svg" alt="" />
+                SLOWTRACE X
+              </button>
+              <button
+                className="navbar-menu"
+                aria-expanded={mobile}
+                aria-label={mobile ? "Close navigation" : "Open navigation"}
+                onClick={() => setMobile(!mobile)}
+              >
+                {mobile ? <X size={18} /> : <Menu size={18} />}
+              </button>
+              <nav
+                aria-label="Main navigation"
+                className={`navbar-nav ${mobile ? "open" : ""}`}
+              >
+                {NAV.map(({ id, label }) => (
+                  <button
+                    key={id}
+                    className={page === id ? "active" : ""}
+                    aria-current={page === id ? "page" : undefined}
+                    onClick={() => go(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <div className="navbar-more">
+                  <button
+                    className={MORE.some((m) => m.id === page) ? "active" : ""}
+                    aria-haspopup="true"
+                    aria-expanded={moreOpen}
+                    onClick={() => setMoreOpen(!moreOpen)}
+                  >
+                    More <ChevronDown size={14} />
+                  </button>
+                  <div className={`navbar-more-menu ${moreOpen ? "open" : ""}`}>
+                    {MORE.map(({ id, label }) => (
+                      <button
+                        key={id}
+                        className={page === id ? "active" : ""}
+                        aria-current={page === id ? "page" : undefined}
+                        onClick={() => go(id)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </nav>
-          </header>
+              </nav>
+            </header>
+          )}
           <main id="main" className={`view-${page}`}>
             {page === "home" && (
               <MissionHome onNavigate={navigate} onExample={chooseTarget} />
@@ -2264,13 +2357,28 @@ export default function App() {
                 </details>
               )}
             <footer className="page-footer">
-              <span>Data: NASA/IPAC IRSA, SPHEREx DR1 and QR3</span>
+              {page === "home" ? (
+                <>
+                  <span>
+                    <span className="signal-dot" /> REAL DATA. OPEN QUESTIONS.
+                  </span>
+                  <span>
+                    NASA/IPAC IRSA · SPHEREx · Independent Space Apps project
+                  </span>
+                </>
+              ) : (
+                <span>Data: NASA/IPAC IRSA, SPHEREx DR1 and QR3</span>
+              )}
               <a
                 href="https://irsa.ipac.caltech.edu/Missions/spherex.html"
                 target="_blank"
                 rel="noreferrer"
               >
-                irsa.ipac.caltech.edu
+                {page === "home" ? (
+                  <>Explore the mission <ArrowUpRight size={12} /></>
+                ) : (
+                  "irsa.ipac.caltech.edu"
+                )}
               </a>
             </footer>
           </main>

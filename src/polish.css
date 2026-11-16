@@ -26,9 +26,9 @@ body {
   background: var(--bg);
   font-size: 14px;
 }
-*,
-*::before,
-*::after {
+:where(:not(.is-mission, .is-mission *)),
+:where(:not(.is-mission, .is-mission *))::before,
+:where(:not(.is-mission, .is-mission *))::after {
   box-shadow: none !important;
   text-shadow: none !important;
   backdrop-filter: none !important;

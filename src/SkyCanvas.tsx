@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Crosshair, Expand, Minus, Plus } from "lucide-react";
 import type { Frame } from "./types";
 import { renderPixels } from "./lib";
@@ -14,6 +15,7 @@ export default function SkyCanvas({
   overlayOpacity = 0.45,
   quality = false,
   track,
+  caption,
 }: {
   frame?: Frame;
   reference?: Frame;
@@ -26,6 +28,7 @@ export default function SkyCanvas({
   overlayOpacity?: number;
   quality?: boolean;
   track?: { x: number; y: number }[];
+  caption?: ReactNode;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlay = useRef<HTMLCanvasElement>(null);
@@ -171,13 +174,15 @@ export default function SkyCanvas({
         <b>E</b>
       </div>
       <div className="canvas-caption">
-        {frame
-          ? mode === "difference"
-            ? "Difference image"
-            : mode === "overlay"
-              ? "Blended exposures"
-              : "SPHEREx exposure"
-          : "No exposure loaded"}
+        {frame && caption
+          ? caption
+          : frame
+            ? mode === "difference"
+              ? "Difference image"
+              : mode === "overlay"
+                ? "Blended exposures"
+                : "SPHEREx exposure"
+            : "No exposure loaded"}
       </div>
       <div className="canvas-tools">
         <button
