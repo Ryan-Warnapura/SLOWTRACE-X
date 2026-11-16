@@ -1,18 +1,18 @@
 .archive-tools,
 .frame-origin {
-  color: #9aaca5;
+  color: #8b9396;
   font-size: 12px;
   margin: 0 0 16px;
 }
 .archive-tools > summary,
 .frame-origin > summary {
   cursor: pointer;
-  color: #c0d2b4;
+  color: #e6e6e6;
 }
 .archive-tools[open] {
-  background: #192223;
-  border: 1px solid #35423e;
-  border-radius: 8px;
+  background: #171b1d;
+  border: 1px solid #1f2426;
+  border-radius: 6px;
   padding: 14px;
 }
 .archive-tools p {
@@ -21,7 +21,7 @@
 .frame-origin {
   padding: 11px 16px;
   margin: 0;
-  border-top: 1px solid #303d3b;
+  border-top: 1px solid #1f2426;
 }
 .frame-origin .checksum {
   overflow-wrap: anywhere;
@@ -29,10 +29,10 @@
 .archive-recovery {
   margin: 0 0 16px;
   padding: 12px 14px;
-  border: 1px solid #39483e;
-  border-radius: 7px;
-  background: #1b2620;
-  color: #bacbb8;
+  border: 1px solid #1f2426;
+  border-radius: 6px;
+  background: #171b1d;
+  color: #e6e6e6;
   font-size: 12px;
 }
 .archive-recovery-message {
@@ -50,7 +50,7 @@
 }
 .archive-recovery summary {
   cursor: pointer;
-  color: #d3e3bd;
+  color: #e6e6e6;
 }
 .detector-options {
   display: grid;
@@ -65,8 +65,8 @@
   text-align: left;
 }
 .detector-options button span {
-  font-size: 10px;
-  color: #adc4af;
+  font-size: 12px;
+  color: #e6e6e6;
 }
 .compare-controls {
   display: flex;
@@ -74,9 +74,9 @@
   gap: 10px 16px;
   justify-content: space-between;
   padding: 7px 14px;
-  border-bottom: 1px solid #293436;
-  font-size: 10px;
-  color: #a4b5ae;
+  border-bottom: 1px solid #1f2426;
+  font-size: 12px;
+  color: #8b9396;
 }
 .compare-controls label {
   display: inline-flex;
@@ -84,7 +84,7 @@
   align-items: center;
 }
 .compare-controls input {
-  accent-color: #d7f49c;
+  accent-color: #e6e6e6;
 }
 .compare-controls select {
   font-size: inherit;
@@ -97,21 +97,21 @@
   gap: 5px;
 }
 .epoch-buttons button {
-  border: 1px solid #32413e;
+  border: 1px solid #1f2426;
   border-radius: 6px;
-  background: #172023;
-  font-size: 9px;
+  background: #171b1d;
+  font-size: 12px;
   white-space: nowrap;
   padding: 6px 8px;
 }
 .epoch-buttons button[aria-pressed="true"] {
-  border-color: #829776;
-  background: #2b382b;
-  color: #e0f1cb;
+  border-color: #3a4245;
+  background: #171b1d;
+  color: #e6e6e6;
 }
 .epoch-buttons span {
   display: block;
-  color: #a2b49b;
+  color: #8b9396;
   margin-top: 4px;
 }
 .survey-desk .panel-heading,
@@ -136,19 +136,19 @@
   gap: 10px;
 }
 .survey-status {
-  font-size: 10px;
+  font-size: 12px;
   margin: 14px 0 25px;
-  color: #9eafa5;
+  color: #8b9396;
 }
 .survey-status span {
   padding: 6px 9px;
-  border: 1px solid #38423d;
+  border: 1px solid #1f2426;
   border-radius: 5px;
-  text-transform: capitalize;
+  text-transform: none;
 }
 .survey-status strong {
   margin-left: 6px;
-  color: #d0e2c0;
+  color: #e6e6e6;
 }
 .survey-controls {
   margin: 16px 0;
@@ -159,7 +159,7 @@
   padding: 7px;
 }
 .survey-fields > details {
-  border-top: 1px solid #3a4942;
+  border-top: 1px solid #1f2426;
   padding: 12px 0;
 }
 .survey-fields > details > summary {
@@ -171,13 +171,13 @@
   font-size: 12px;
 }
 .survey-fields summary > span:not(.tag) {
-  color: #a1b1a7;
+  color: #8b9396;
 }
 .survey-fields p,
 .candidate-reason {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #b0c0b4;
+  color: #e6e6e6;
 }
 .candidate-detail > .text-button {
   margin: 0 0 16px;
@@ -188,7 +188,7 @@
 .candidate-section {
   margin-top: 24px;
   padding-top: 18px;
-  border-top: 1px solid #39483f;
+  border-top: 1px solid #1f2426;
 }
 .catalog-columns {
   display: grid;
@@ -197,9 +197,9 @@
   margin-top: 14px;
 }
 .catalog-summary {
-  background: #1b2822;
-  border: 1px solid #384c3e;
-  border-radius: 7px;
+  background: #171b1d;
+  border: 1px solid #1f2426;
+  border-radius: 6px;
   padding: 14px;
   min-width: 0;
 }
@@ -208,14 +208,14 @@
 }
 .catalog-summary strong {
   font-size: 12px;
-  color: #d0e1c5;
+  color: #e6e6e6;
 }
 .catalog-summary ul,
 .candidate-hypotheses {
   padding-left: 15px;
   margin-bottom: 0;
-  font-size: 11px;
-  color: #a7bbab;
+  font-size: 12px;
+  color: #8b9396;
   line-height: 1.7;
 }
 .evidence-files {
@@ -229,11 +229,11 @@
   display: inline-flex;
   gap: 5px;
   align-items: center;
-  border: 1px solid #354b3c;
+  border: 1px solid #1f2426;
   border-radius: 5px;
-  font-size: 10px;
+  font-size: 12px;
   padding: 6px 8px;
-  color: #bccfb0;
+  color: #e6e6e6;
 }
 @media (max-width: 680px) {
   .catalog-columns {

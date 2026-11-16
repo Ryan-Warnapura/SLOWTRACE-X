@@ -171,15 +171,13 @@ export default function SkyCanvas({
         <b>E</b>
       </div>
       <div className="canvas-caption">
-        <span className="signal-dot" />{" "}
         {frame
-          ? "NASA / SPHEREx · " +
-            (mode === "difference"
-              ? "PROCESSED DIFFERENCE"
-              : mode === "overlay"
-                ? "BLENDED EXPOSURES"
-                : "OBSERVED INFRARED LIGHT")
-          : "ICRS · CELESTIAL COORDINATES"}
+          ? mode === "difference"
+            ? "Difference image"
+            : mode === "overlay"
+              ? "Blended exposures"
+              : "SPHEREx exposure"
+          : "No exposure loaded"}
       </div>
       <div className="canvas-tools">
         <button

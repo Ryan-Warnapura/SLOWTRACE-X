@@ -5,10 +5,9 @@
 
 .bulk-survey-hero {
   padding: clamp(18px, 2.3vw, 28px);
-  background:
-    radial-gradient(ellipse at 88% -40%, #245587, transparent 75%), #0c1a2c;
+  background: var(--s1);
   border: 1px solid var(--stats-line);
-  border-radius: 17px;
+  border-radius: 6px;
 }
 
 .bulk-survey-title {
@@ -20,8 +19,8 @@
 
 .bulk-survey-title h2 {
   margin: 9px 0 7px;
-  font-size: clamp(1.9rem, 3.6vw, 3.3rem);
-  letter-spacing: -0.04em;
+  font-size: 28px;
+  letter-spacing: 0;
   line-height: 1.08;
 }
 
@@ -42,7 +41,7 @@
   margin: 0;
   max-width: 60ch;
   color: var(--stats-secondary);
-  font-size: 0.86rem;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -57,14 +56,14 @@
   align-items: baseline;
   justify-content: space-between;
   color: var(--stats-secondary);
-  font-size: 0.82rem;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 
 .bulk-survey-progress strong {
   color: var(--stats-text);
-  font-size: clamp(1.4rem, 4vw, 2.5rem);
-  font-weight: 650;
+  font-size: 28px;
+  font-weight: 600;
 }
 
 .bulk-survey-progress > span {
@@ -79,13 +78,13 @@
   accent-color: var(--stats-accent);
   appearance: none;
   border: 0;
-  border-radius: 10px;
-  background: #1c344f;
+  border-radius: 6px;
+  background: #1f2426;
   overflow: hidden;
 }
 
 .bulk-survey-hero progress::-webkit-progress-bar {
-  background: #1c344f;
+  background: #1f2426;
 }
 
 .bulk-survey-hero progress::-webkit-progress-value {
@@ -103,20 +102,20 @@
 }
 
 .bulk-result-card {
-  --result-color: #8de0fa;
+  --result-color: #e6e6e6;
   min-width: 0;
   padding: clamp(16px, 2.4vw, 26px);
   border: 1px solid var(--stats-line);
   border-top-color: var(--result-color);
-  border-radius: 12px;
-  background: linear-gradient(145deg, #142942, #101a2b 68%);
+  border-radius: 6px;
+  background: var(--s1);
 }
 
 .bulk-result-motion {
-  --result-color: #a9e4bd;
+  --result-color: #e6e6e6;
 }
 .bulk-result-review {
-  --result-color: #e8c79c;
+  --result-color: #e6e6e6;
 }
 
 .bulk-result-card h3 {
@@ -125,7 +124,7 @@
   gap: 8px;
   margin: 0 0 15px;
   color: var(--result-color);
-  font-size: 0.87rem;
+  font-size: 14px;
 }
 
 .bulk-result-card h3 svg {
@@ -135,21 +134,21 @@
 .bulk-result-card strong,
 .bulk-result-card dd {
   color: var(--stats-text);
-  font-size: clamp(1.75rem, 3vw, 2.55rem);
-  font-weight: 650;
+  font-size: 28px;
+  font-weight: 600;
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
 
 .bulk-result-card small {
   color: var(--stats-secondary);
-  font-size: 0.83rem;
+  font-size: 13px;
 }
 
 .bulk-result-card p {
   margin: 12px 0 0;
   color: var(--stats-secondary);
-  font-size: 0.82rem;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -171,7 +170,7 @@
 }
 .bulk-result-card dt {
   color: var(--stats-secondary);
-  font-size: 0.78rem;
+  font-size: 12px;
 }
 
 .bulk-survey-grid {
@@ -214,7 +213,7 @@
   gap: 10px;
   padding: 8px 0;
   border-bottom: 1px solid var(--stats-line);
-  font-size: 0.8rem;
+  font-size: 13px;
   line-height: 1.4;
 }
 
@@ -239,7 +238,7 @@
 .bulk-survey-limits {
   margin: 0;
   padding-inline-start: 17px;
-  font-size: 0.8rem;
+  font-size: 13px;
   line-height: 1.55;
 }
 
@@ -263,7 +262,7 @@
   max-width: 72px;
   display: flex;
   align-items: end;
-  background: #132743;
+  background: #171b1d;
   border-radius: 3px 3px 0 0;
 }
 
@@ -271,7 +270,7 @@
   display: block;
   width: 100%;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(to top, #4e92de, #80e3ff);
+  background: var(--s1);
 }
 
 .bulk-survey-table th,

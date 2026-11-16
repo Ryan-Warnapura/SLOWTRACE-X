@@ -5,6 +5,7 @@ import App from "./App";
 import "./styles.css";
 import "./survey.css";
 import "./experience.css";
+import "./polish.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

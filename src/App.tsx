@@ -310,7 +310,7 @@ export default function App() {
       if (
         event instanceof KeyboardEvent
           ? event.key === "Escape"
-          : !(event.target as Element).closest?.(".topbar-more")
+          : !(event.target as Element).closest?.(".navbar-more")
       )
         setMoreOpen(false);
     };
@@ -957,9 +957,9 @@ export default function App() {
       </a>
       <div className="app-shell">
         <div className="workspace mission-workspace">
-          <header className="topbar">
+          <header className="navbar">
             <button
-              className="topbar-brand"
+              className="navbar-brand"
               onClick={() => go("observe")}
               aria-label="SLOWTRACE X, observe"
             >
@@ -967,7 +967,7 @@ export default function App() {
               SLOWTRACE X
             </button>
             <button
-              className="topbar-menu"
+              className="navbar-menu"
               aria-expanded={mobile}
               aria-label={mobile ? "Close navigation" : "Open navigation"}
               onClick={() => setMobile(!mobile)}
@@ -976,7 +976,7 @@ export default function App() {
             </button>
             <nav
               aria-label="Main navigation"
-              className={`topbar-nav ${mobile ? "open" : ""}`}
+              className={`navbar-nav ${mobile ? "open" : ""}`}
             >
               {NAV.map(({ id, label }) => (
                 <button
@@ -988,7 +988,7 @@ export default function App() {
                   {label}
                 </button>
               ))}
-              <div className="topbar-more">
+              <div className="navbar-more">
                 <button
                   className={MORE.some((m) => m.id === page) ? "active" : ""}
                   aria-haspopup="true"
@@ -997,7 +997,7 @@ export default function App() {
                 >
                   More <ChevronDown size={14} />
                 </button>
-                <div className={`topbar-more-menu ${moreOpen ? "open" : ""}`}>
+                <div className={`navbar-more-menu ${moreOpen ? "open" : ""}`}>
                   {MORE.map(({ id, label }) => (
                     <button
                       key={id}
@@ -2236,9 +2236,8 @@ export default function App() {
                 (search?.attempts?.length ?? 0) > 0) && (
                 <details className="warnings">
                   <summary>
-                    <CircleHelp size={14} /> Data notes and retrieval details{" "}
-                    <span>{warnings.length + failures.length}</span>
-                    <ChevronDown size={15} />
+                    Data notes and retrieval details (
+                    {warnings.length + failures.length})
                   </summary>
                   {search?.attempts?.map((a, i) => (
                     <p key={`lookup-${i}`}>
@@ -2259,18 +2258,13 @@ export default function App() {
                 </details>
               )}
             <footer className="page-footer">
-              <span>
-                <span className="signal-dot" /> REAL DATA. OPEN QUESTIONS.
-              </span>
-              <span>
-                NASA/IPAC IRSA · SPHEREx · Independent Space Apps project
-              </span>
+              <span>Data: NASA/IPAC IRSA, SPHEREx DR1 and QR3</span>
               <a
                 href="https://irsa.ipac.caltech.edu/Missions/spherex.html"
                 target="_blank"
                 rel="noreferrer"
               >
-                Explore the mission <ArrowUpRight size={12} />
+                irsa.ipac.caltech.edu
               </a>
             </footer>
           </main>
