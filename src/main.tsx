@@ -14,6 +14,7 @@ import "./styles/shell.css";
 import "./styles/plate.css";
 import "./styles/observe.css";
 import "./styles/mission.css";
+import "./styles/tools.css";
 import "./survey.css";
 import App from "./App";
 ReactDOM.createRoot(document.getElementById("root")!).render(

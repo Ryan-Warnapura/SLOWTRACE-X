@@ -59,9 +59,9 @@ export default function EvidenceMaps({
     const image = ctx.createImageData(width, height);
     for (let i = 0; i < width * height; i++) {
       const v = values[i];
-      let red = 12,
-        green = 18,
-        blue = 33;
+      let red = 9,
+        green = 10,
+        blue = 12;
       if (v !== null && Number.isFinite(v)) {
         const t = Math.max(
           0,
@@ -69,14 +69,14 @@ export default function EvidenceMaps({
         );
         if (selected === "difference") {
           const a = Math.abs(2 * t - 1);
-          red = 25 + a * (t < 0.5 ? 44 : 221);
-          green = 34 + a * (t < 0.5 ? 112 : 105);
-          blue = 47 + a * (t < 0.5 ? 208 : 39);
+          red = 30 + a * (t < 0.5 ? 39 : 216);
+          green = 32 + a * (t < 0.5 ? 114 : 107);
+          blue = 35 + a * (t < 0.5 ? 220 : 51);
         } else {
           const a = Math.pow(t, selected === "stack" ? 0.45 : 0.85);
-          red = 12 + a * 174;
-          green = 18 + a * 212;
-          blue = 33 + a * 222;
+          red = a * 239;
+          green = a * 237;
+          blue = a * 230;
         }
       }
       image.data.set([red, green, blue, 255], 4 * i);
@@ -148,7 +148,7 @@ export default function EvidenceMaps({
                 aria-pressed={peakIndex === index}
                 onClick={() => setPeakIndex(index)}
               >
-                <Crosshair size={16} />
+                <span>{index + 1}</span>
               </button>
             ))}
           </div>
@@ -161,8 +161,7 @@ export default function EvidenceMaps({
           </figcaption>
         </figure>
         <div className="evidence-readout">
-          <span className="eyebrow">IMAGE INSPECTION</span>
-          <h4>{plane.label}</h4>
+          <h4 className="title-module">{plane.label}</h4>
           <p>
             {selected === "searchSnr"
               ? "Each pixel displays the strongest nominal signal-to-noise among the velocities tested."
@@ -190,7 +189,7 @@ export default function EvidenceMaps({
                 <option value="">Choose a peak</option>
                 {peaks.map((p, i) => (
                   <option key={i} value={i}>
-                    Peak {i + 1} · {fmt(p.nominalSnr, 1)} S/N
+                    Peak {i + 1}, S/N {fmt(p.nominalSnr, 1)}
                   </option>
                 ))}
               </select>

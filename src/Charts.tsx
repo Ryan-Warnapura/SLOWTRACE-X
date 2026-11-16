@@ -1,5 +1,7 @@
 import {
   CartesianGrid,
+  Cell,
+  ReferenceLine,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -11,6 +13,17 @@ import {
   ErrorBar,
   Legend,
 } from "recharts";
+import { wavelengthColor } from "./wavelength";
+
+const AXIS = "#8d8b85";
+const GRID = "#363a40";
+const TOOLTIP = {
+  background: "#2b2e33",
+  border: "1px solid #4f545c",
+  borderRadius: 2,
+  color: "#efede6",
+  fontSize: 12,
+};
 export function SpectrumChart({
   data,
   axis = "wavelength",
@@ -22,49 +35,50 @@ export function SpectrumChart({
     <div className="chart">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
-          <CartesianGrid stroke="#2a3236" strokeDasharray="3 5" />
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" />
           <XAxis
             dataKey={axis}
             type="number"
             domain={["auto", "auto"]}
-            tick={{ fill: "#91a1a4", fontSize: 11 }}
+            tick={{ fill: AXIS, fontSize: 11 }}
             name={axis === "wavelength" ? "Wavelength (µm)" : "MJD"}
             label={{
               value:
                 axis === "wavelength"
-                  ? "Approximate wavelength · µm"
-                  : "Observation epoch · MJD",
+                  ? "Approximate wavelength (µm)"
+                  : "Observation date (MJD)",
               position: "bottom",
-              fill: "#91a1a4",
+              fill: AXIS,
               fontSize: 11,
             }}
           />
           <YAxis
             dataKey="value"
             type="number"
-            tick={{ fill: "#91a1a4", fontSize: 11 }}
+            tick={{ fill: AXIS, fontSize: 11 }}
             name="Surface brightness"
             unit=" MJy/sr"
-            width={65}
+            width={88}
           />
           <Tooltip
             cursor={{ strokeDasharray: "3 3" }}
-            contentStyle={{
-              background: "#1b2327",
-              border: "1px solid #3c494b",
-              borderRadius: 8,
-              color: "#e8eee8",
-            }}
+            contentStyle={TOOLTIP}
           />
           <Scatter
             name="Aperture − local background"
             data={data}
-            fill="#d7f49c"
+            fill="#efede6"
           >
+            {data.map((sample, index) => (
+              <Cell
+                key={index}
+                fill={wavelengthColor(sample.wavelength as number | null)}
+              />
+            ))}
             <ErrorBar
               dataKey="error"
               width={4}
-              stroke="#8ba968"
+              stroke="#b6b4ad"
               direction="y"
             />
           </Scatter>
@@ -81,32 +95,30 @@ export function PlannerChart({ data }: { data: Record<string, unknown>[] }) {
           data={data}
           margin={{ top: 15, right: 25, bottom: 15, left: 0 }}
         >
-          <CartesianGrid stroke="#2a3236" strokeDasharray="3 5" />
-          <XAxis dataKey="time" tick={{ fill: "#91a1a4", fontSize: 10 }} />
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" />
+          <XAxis dataKey="time" tick={{ fill: AXIS, fontSize: 11 }} />
           <YAxis
             domain={[-90, 90]}
             unit="°"
-            tick={{ fill: "#91a1a4", fontSize: 11 }}
+            tick={{ fill: AXIS, fontSize: 11 }}
           />
           <Tooltip
-            contentStyle={{
-              background: "#1b2327",
-              border: "1px solid #3c494b",
-              color: "#e8eee8",
-            }}
+            contentStyle={TOOLTIP}
           />
-          <Legend />
+          <Legend wrapperStyle={{ fontSize: 12, color: AXIS }} />
+          <ReferenceLine y={30} stroke={GRID} strokeDasharray="6 4" />
+          <ReferenceLine y={-18} stroke={GRID} strokeDasharray="6 4" />
           <Line
             dataKey="altitude"
             name="Target altitude"
-            stroke="#d7f49c"
+            stroke="#efede6"
             dot={false}
             isAnimationActive={false}
           />
           <Line
             dataKey="sun"
             name="Sun altitude"
-            stroke="#ce9270"
+            stroke="#f2b84b"
             dot={false}
             isAnimationActive={false}
           />

@@ -1,0 +1,260 @@
+/* Field tools: Spectra, DeepTrace, Experiment lab, Notebook, Planner, and the
+   Methods page. They share the well, control grid and result parts. */
+
+/* Results returned by a calculation */
+.scientific-result {
+  margin-top: var(--s-6);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule-strong);
+}
+.scientific-result > p {
+  max-width: 88ch;
+  margin-bottom: var(--s-2);
+  color: var(--text-2);
+}
+.recovery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--s-4);
+  margin: var(--s-4) 0;
+}
+.recovery-grid > div {
+  display: grid;
+  gap: var(--s-1);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--rule-strong);
+}
+.recovery-grid strong {
+  font-family: var(--display);
+  font-size: var(--fs-32);
+  font-weight: 400;
+  line-height: 1;
+}
+.recovery-grid span {
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.recovery-bars {
+  display: grid;
+  gap: var(--s-2);
+  max-width: 720px;
+  margin: var(--s-4) 0;
+}
+.recovery-bars > div {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--text-2);
+  font-size: var(--fs-13);
+}
+.recovery-bar-track {
+  height: 8px;
+  border: 1px solid var(--rule);
+  background: var(--deep);
+}
+.recovery-bar-track > div {
+  height: 100%;
+  background: var(--text);
+}
+.recovery-bars strong {
+  font-weight: 400;
+  text-align: right;
+}
+
+.result-limits {
+  margin-top: var(--s-6);
+}
+.result-limits ul {
+  display: grid;
+  gap: 6px;
+  max-width: 96ch;
+  margin-top: var(--s-2);
+  padding-left: var(--s-4);
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+
+/* Evidence maps: stack, difference and best-trial planes */
+.evidence-map {
+  margin: var(--s-4) 0;
+}
+.evidence-map-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 420px) minmax(180px, 1fr);
+  align-items: start;
+  gap: var(--s-6);
+  margin-top: var(--s-3);
+}
+.evidence-raster {
+  position: relative;
+  border: 1px solid var(--rule-strong);
+  background: var(--field);
+  overflow: hidden;
+}
+.evidence-raster canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+}
+.evidence-raster .map-peak {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  outline: 1.5px solid rgb(0 0 0 / 85%);
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+}
+.evidence-raster .map-peak[aria-pressed="true"] {
+  z-index: 2;
+  background: #fff;
+  color: #000;
+}
+.evidence-scale {
+  height: 6px;
+  margin-top: var(--s-2);
+  background: linear-gradient(90deg, #000, #efede6);
+}
+.evidence-scale.diverging {
+  background: linear-gradient(90deg, #4592ff, #1e2023, #f68b56);
+}
+.evidence-map figcaption {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--s-1);
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.evidence-readout {
+  display: grid;
+  gap: var(--s-3);
+  max-width: 56ch;
+}
+.evidence-readout p {
+  color: var(--text-2);
+  font-size: var(--fs-13);
+}
+.evidence-readout .stacked-label {
+  margin: 0;
+}
+.evidence-readout .secondary {
+  justify-self: start;
+}
+
+/* Notebook */
+.notebook-grid,
+.methods-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-6);
+}
+.notebook-grid select,
+.notebook-grid textarea {
+  width: 100%;
+  max-width: 560px;
+}
+.section-title .count {
+  padding: 0 6px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-key);
+  color: var(--text-2);
+  font-size: var(--fs-12);
+  font-weight: 400;
+}
+.note {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-2);
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--rule);
+}
+.note p {
+  max-width: 68ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.note small {
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.note > .text-button {
+  margin-left: calc(var(--s-2) * -1);
+}
+
+/* Planner */
+.window-list {
+  display: grid;
+  gap: 0;
+  max-width: 720px;
+  margin-top: var(--s-4);
+}
+.window-list > div:not(.notice) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--rule);
+  font-size: var(--fs-13);
+}
+.window-list strong {
+  font-weight: 700;
+}
+.window-list > div > span:last-child {
+  margin-left: auto;
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+
+/* Methods */
+.methods-prose {
+  max-width: 760px;
+}
+.methods-grid .tool-panel > p {
+  max-width: 68ch;
+  margin-top: var(--s-2);
+  color: var(--text-2);
+}
+.methods-grid h3 {
+  margin-top: var(--s-6);
+  font-size: var(--fs-14);
+  font-weight: 700;
+}
+.methods-grid .title-section {
+  margin-bottom: var(--s-3);
+}
+.resource-link {
+  display: block;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
+  text-decoration-color: transparent;
+}
+.resource-link:first-of-type {
+  margin-top: var(--s-4);
+}
+.resource-link:hover {
+  text-decoration-color: currentColor;
+}
+
+@media (max-width: 900px) {
+  .notebook-grid,
+  .methods-grid,
+  .evidence-map-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tool-panel {
+    padding: var(--s-4);
+  }
+  .recovery-bars > div {
+    grid-template-columns: 110px minmax(0, 1fr) 48px;
+  }
+}

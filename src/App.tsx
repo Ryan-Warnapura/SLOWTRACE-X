@@ -1266,9 +1266,10 @@ export default function App() {
             )}
             {candidateContext && page !== "survey" && (
               <div className="load-status">
-                <Radar size={15} /> Survey evidence · {candidateContext.id} ·
-                ICRS {fmt(candidateContext.ra, 6)}°,{" "}
-                {fmt(candidateContext.dec, 6)}°
+                <span>
+                  Survey evidence {candidateContext.id}, at ICRS{" "}
+                  {fmt(candidateContext.ra, 6)}°, {fmt(candidateContext.dec, 6)}°
+                </span>
               </div>
             )}
             {page === "survey" && (
@@ -2011,14 +2012,15 @@ export default function App() {
             )}
             {page === "spectra" && (
               <section className="panel tool-panel">
-                <div className="panel-heading">
-                  <div>
-                    <span className="eyebrow">
-                      102-CHANNEL MISSION / AVAILABLE SAMPLES
-                    </span>
-                    <h2>A spectrum begins with measurements.</h2>
-                  </div>
-                  <div className="segmented">
+                <div className="well-head">
+                  <h2 className="title-module">
+                    Samples at {fmt(selected.ra, 5)}°, {fmt(selected.dec, 5)}°
+                  </h2>
+                  <div
+                    className="seg"
+                    role="group"
+                    aria-label="Horizontal axis"
+                  >
                     <button
                       className={
                         spectralAxis === "wavelength" ? "selected" : ""
@@ -2055,14 +2057,17 @@ export default function App() {
                   </Suspense>
                 ) : (
                   <Empty
-                    icon={<Waves size={32} />}
-                    text="Load observations to measure the selected sky position."
+                    text={
+                      frames.length
+                        ? "No valid pixels at the selected position, so there is nothing to measure. Click another source in the blink viewer, then come back."
+                        : "Load a field to measure the selected sky position."
+                    }
                   />
                 )}
                 <div className="tool-footer">
                   <span>
-                    Position {fmt(selected.ra, 5)}°, {fmt(selected.dec, 5)}° ·
-                    radius 2 output pixels
+                    Aperture radius 2 output pixels, background from an annulus
+                    of 4 to 7 pixels
                   </span>
                   <button
                     className="secondary"
@@ -2077,27 +2082,22 @@ export default function App() {
                     }
                     disabled={!measurements.length}
                   >
-                    <ArrowDownToLine size={15} /> Export measurements
+                    <ArrowDownToLine size={14} /> Export measurements
                   </button>
                 </div>
                 <p className="caption">
-                  Select a source at the observation desk. Choose another
-                  detector above to inspect a different infrared range. Changes
-                  between different wavelengths are not a light curve.
+                  Select a source in the blink viewer. Choose another detector
+                  above to inspect a different infrared range. Changes between
+                  different wavelengths are not a light curve.
                 </p>
               </section>
             )}
             {page === "trace" && (
               <section className="panel tool-panel">
-                <div className="panel-heading">
-                  <div>
-                    <span className="eyebrow">
-                      DEEPTRACE / EXPERIMENTAL SEARCH
-                    </span>
-                    <h2>Make coherent motion stand out.</h2>
-                  </div>
+                <div className="well-head">
+                  <h2 className="title-module">Experimental search</h2>
                   <span className="tag">
-                    Measured evidence · no discovery probability
+                    Measured evidence, not a discovery probability
                   </span>
                 </div>
                 <p className="tool-intro">
@@ -2138,16 +2138,13 @@ export default function App() {
                       disabled={frames.length < 2 || !!working}
                       onClick={() => void run("analyze")}
                     >
-                      {working === "analyze" ? (
-                        <LoaderCircle className="spinner" size={17} />
-                      ) : (
-                        <ScanLine size={17} />
-                      )}{" "}
+                      {working === "analyze" && (
+                        <LoaderCircle className="spinner" size={15} />
+                      )}
                       Run DeepTrace
                     </button>
                     <small>
-                      {frames.length} real exposures available · at least 2
-                      required
+                      {frames.length} real exposures loaded, at least 2 needed
                     </small>
                   </div>
                 </div>
@@ -2157,10 +2154,7 @@ export default function App() {
                     onInvestigate={(peak) => investigatePeak(peak, result)}
                   />
                 ) : (
-                  <Empty
-                    icon={<ScanLine size={32} />}
-                    text="No search has been run on this field yet."
-                  />
+                  <Empty text="No search has run on this field yet. Set the limits above and run DeepTrace." />
                 )}
                 <Notice>
                   A residual can be a star, a detector artifact, a bandpass
@@ -2174,30 +2168,26 @@ export default function App() {
                     className="text-button"
                     onClick={() => navigate("lab")}
                   >
-                    <FlaskConical size={16} /> Test recovery on these images{" "}
-                    <ArrowRight size={14} />
+                    Test recovery on these images
                   </button>
                   <button
                     className="secondary"
                     disabled={!result}
                     onClick={() => download("slowtrace-analysis.json", result)}
                   >
-                    <ArrowDownToLine size={15} /> Export analysis
+                    <ArrowDownToLine size={14} /> Export analysis
                   </button>
                 </div>
               </section>
             )}
             {page === "lab" && (
               <section className="panel tool-panel">
-                <div className="panel-heading">
-                  <div>
-                    <span className="eyebrow">
-                      CONTROLLED EXPERIMENT / REAL BACKGROUNDS
-                    </span>
-                    <h2>Put the search to the test.</h2>
-                  </div>
+                <div className="well-head">
+                  <h2 className="title-module">
+                    Controlled experiment on real backgrounds
+                  </h2>
                   <span className="tag amber">
-                    Synthetic injections clearly identified
+                    Synthetic injections, clearly identified
                   </span>
                 </div>
                 <p className="tool-intro">
@@ -2248,11 +2238,9 @@ export default function App() {
                       disabled={frames.length < 2 || !!working}
                       onClick={() => void run("experiment")}
                     >
-                      {working === "experiment" ? (
-                        <LoaderCircle className="spinner" size={17} />
-                      ) : (
-                        <FlaskConical size={17} />
-                      )}{" "}
+                      {working === "experiment" && (
+                        <LoaderCircle className="spinner" size={15} />
+                      )}
                       Run recovery experiment
                     </button>
                     <small>Measured outcomes, including failures</small>
@@ -2261,10 +2249,7 @@ export default function App() {
                 {experiment ? (
                   <ScientificResult result={experiment} />
                 ) : (
-                  <Empty
-                    icon={<FlaskConical size={32} />}
-                    text="Your experiment results will appear after the calculation."
-                  />
+                  <Empty text="Run the experiment to see how many injected sources each method recovers." />
                 )}
                 <Notice>
                   Injected objects are synthetic; the image backgrounds are
@@ -2283,7 +2268,7 @@ export default function App() {
                       download("slowtrace-experiment.json", experiment)
                     }
                   >
-                    <ArrowDownToLine size={15} /> Export reproducible run
+                    <ArrowDownToLine size={14} /> Export reproducible run
                   </button>
                 </div>
               </section>
@@ -2291,14 +2276,13 @@ export default function App() {
             {page === "notebook" && (
               <div className="notebook-grid">
                 <section className="panel tool-panel">
-                  <span className="eyebrow">
-                    A HUMAN LOOK IS PART OF THE METHOD
-                  </span>
-                  <h2>Record what you see.</h2>
-                  <p className="muted">
-                    Selected position: {fmt(selected.ra, 6)}°,{" "}
-                    {fmt(selected.dec, 6)}°. Records are saved in this browser,
-                    with source IDs attached.
+                  <div className="well-head">
+                    <h2 className="title-module">Record what you see</h2>
+                  </div>
+                  <p className="tool-intro">
+                    A human look is part of the method. Selected position{" "}
+                    {fmt(selected.ra, 6)}°, {fmt(selected.dec, 6)}°. Records
+                    are saved in this browser, with source IDs attached.
                   </p>
                   <label className="stacked-label">
                     Observation type
@@ -2327,7 +2311,7 @@ export default function App() {
                     />
                   </label>
                   <button className="primary" onClick={saveNote}>
-                    <NotebookPen size={16} /> Save observation
+                    Save observation
                   </button>
                   <Notice>
                     These are personal research notes. They are not submitted to
@@ -2344,22 +2328,20 @@ export default function App() {
                       aria-label="Export notebook"
                       onClick={() => download("slowtrace-notebook.json", notes)}
                     >
-                      <ArrowDownToLine size={18} />
+                      <ArrowDownToLine size={15} />
                     </button>
                   </div>
                   {!notes.length ? (
-                    <Empty
-                      icon={<NotebookPen size={29} />}
-                      text="A good question is worth keeping."
-                    />
+                    <Empty text="No notes yet. A good question is worth keeping." />
                   ) : (
                     notes.map((n) => (
                       <article className="note" key={n.id}>
                         <span className="tag small">{n.classification}</span>
                         <p>{n.text}</p>
                         <small>
-                          {date(n.created)} · {fmt(n.ra, 4)}°, {fmt(n.dec, 4)}°
-                          {n.candidateId ? ` · ${n.candidateId}` : ""}·{" "}
+                          {date(n.created)}, at {fmt(n.ra, 4)}°,{" "}
+                          {fmt(n.dec, 4)}°
+                          {n.candidateId ? `, ${n.candidateId}` : ""},{" "}
                           {n.sourceIds.length} source files
                         </small>
                         <button
@@ -2384,14 +2366,12 @@ export default function App() {
             )}
             {page === "planner" && (
               <section className="panel tool-panel">
-                <div className="panel-heading">
-                  <div>
-                    <span className="eyebrow">
-                      FOLLOW-UP / FIXED SKY POSITION
-                    </span>
-                    <h2>Find a window to observe.</h2>
-                  </div>
-                  <Compass size={26} />
+                <div className="well-head">
+                  <h2 className="title-module">
+                    Dark-sky window for {fmt(selected.ra, 5)}°,{" "}
+                    {fmt(selected.dec, 5)}°
+                  </h2>
+                  <span className="tag">Fixed sky position</span>
                 </div>
                 <div className="control-grid four">
                   <label>
@@ -2429,11 +2409,9 @@ export default function App() {
                     disabled={!!working}
                     onClick={() => void calculatePlan()}
                   >
-                    {working === "plan" ? (
-                      <LoaderCircle className="spinner" size={16} />
-                    ) : (
-                      <Compass size={16} />
-                    )}{" "}
+                    {working === "plan" && (
+                      <LoaderCircle className="spinner" size={15} />
+                    )}
                     Calculate visibility
                   </button>
                 </div>
@@ -2457,8 +2435,8 @@ export default function App() {
                               {w.start.slice(11, 16)}–{w.end.slice(11, 16)} UTC
                             </strong>
                             <span>
-                              {w.durationMinutes} min · altitude ≥30° · Sun
-                              ≤−18°
+                              {w.durationMinutes} min, target above 30°, Sun
+                              below −18°
                             </span>
                           </div>
                         ))
@@ -2492,11 +2470,11 @@ export default function App() {
                   {search?.attempts?.map((a, i) => (
                     <p key={`lookup-${i}`}>
                       {a.service}
-                      {a.collection ? ` / ${a.collection}` : ""} ·{" "}
+                      {a.collection ? ` / ${a.collection}` : ""}:{" "}
                       {a.httpStatus
                         ? `HTTP ${a.httpStatus}`
                         : a.code.replaceAll("-", " ")}
-                      {a.rows !== undefined ? ` · ${a.rows} metadata rows` : ""}
+                      {a.rows !== undefined ? `, ${a.rows} metadata rows` : ""}
                     </p>
                   ))}
                   {[...new Set(warnings)].map((w, i) => (
@@ -2532,10 +2510,9 @@ export default function App() {
     </Tooltip.Provider>
   );
 }
-function Empty({ icon, text }: { icon: React.ReactNode; text: string }) {
+function Empty({ text }: { text: string }) {
   return (
     <div className="empty-state">
-      {icon}
       <p>{text}</p>
     </div>
   );
@@ -2552,9 +2529,7 @@ function ScientificResult({
   return (
     <div className="scientific-result">
       <div className="section-title">
-        <h3>
-          <Check size={17} /> Calculation returned
-        </h3>
+        <h3>Calculation returned</h3>
         <span className="tag">{result.kind || "Preliminary"}</span>
       </div>
       {result.message && <p>{result.message}</p>}
@@ -2574,8 +2549,8 @@ function ScientificResult({
       )}
       {result.selectedFrameIndices && (
         <p className="caption">
-          {result.selectedFrameIndices.length} wavelength-compatible exposures ·{" "}
-          {fmt(result.baselineDays)} days ·{" "}
+          {result.selectedFrameIndices.length} wavelength-compatible exposures
+          over {fmt(result.baselineDays)} days,{" "}
           {result.excludedFrameIndices?.length || 0} excluded
         </p>
       )}
@@ -2631,13 +2606,6 @@ function ScientificResult({
           ))}
         </div>
       )}
-      {(result.notes || result.warnings || result.limitations || []).map(
-        (w: string, i: number) => (
-          <p className="caption" key={i}>
-            {w}
-          </p>
-        ),
-      )}
       {candidates.length > 0 && (
         <div className="table-scroll">
           <table>
@@ -2660,7 +2628,7 @@ function ScientificResult({
                         className="inline-link"
                         onClick={() => onInvestigate(c)}
                       >
-                        Inspect peak {i + 1} <ArrowRight size={13} />
+                        Inspect peak {i + 1}
                       </button>
                     ) : (
                       `STX-${String(i + 1).padStart(3, "0")}`
@@ -2716,6 +2684,19 @@ function ScientificResult({
           </table>
         </div>
       )}
+      {(result.notes || result.warnings || result.limitations || []).length >
+        0 && (
+        <div className="result-limits">
+          <h4 className="title-module">Limits of this calculation</h4>
+          <ul>
+            {(result.notes || result.warnings || result.limitations).map(
+              (w: string, i: number) => (
+                <li key={i}>{w}</li>
+              ),
+            )}
+          </ul>
+        </div>
+      )}
       <details className="raw-result">
         <summary>Full measured results and parameters</summary>
         <pre>
@@ -2735,9 +2716,8 @@ function ScientificResult({
 function Methods() {
   return (
     <div className="methods-grid">
-      <section className="panel tool-panel">
-        <span className="eyebrow">THE SCIENTIFIC CONTRACT</span>
-        <h2>Inspect. Compare. Question.</h2>
+      <section className="panel tool-panel methods-prose">
+        <h2 className="title-section">The scientific contract</h2>
         <p>
           Every displayed observation comes from NASA/IPAC IRSA SPHEREx Level 2
           data. Search covers DR1 and QR3. If a stored archive index is used
@@ -2777,8 +2757,7 @@ function Methods() {
         </p>
       </section>
       <section className="panel tool-panel">
-        <span className="eyebrow">DATA, METHODS & CREDIT</span>
-        <h2>Follow the source.</h2>
+        <h2 className="title-section">Data, methods and credit</h2>
         {[
           [
             "SPHEREx at NASA/IPAC IRSA",
@@ -2797,7 +2776,7 @@ function Methods() {
             "https://caltech-ipac.github.io/irsa-tutorials/spherex/",
           ],
           [
-            "JPL Horizons — independent follow-up",
+            "JPL Horizons, for independent follow-up",
             "https://ssd.jpl.nasa.gov/horizons/",
           ],
           [
@@ -2814,7 +2793,6 @@ function Methods() {
             rel="noreferrer"
           >
             {label}
-            <ArrowUpRight size={15} />
           </a>
         ))}
         <h3>Built with open research</h3>
