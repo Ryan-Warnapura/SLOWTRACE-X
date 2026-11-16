@@ -172,6 +172,14 @@ type LoadSource =
   | { kind: "recorded"; path: string }
   | { kind: "fits"; urls: string[]; label: string; pixels?: number };
 type Packet = { search: SearchResult; frames: Frame[] };
+function fieldKey(params: URLSearchParams) {
+  return JSON.stringify(
+    ["ra", "dec", "fov", "detector", "example", "evidence"].map((key) =>
+      params.get(key),
+    ),
+  );
+}
+
 function initialPage(): Page {
   const params = new URLSearchParams(location.search);
   const page = params.get("page");
@@ -358,6 +366,7 @@ export default function App() {
       Math.abs(t.ra - query.ra) < 0.001 && Math.abs(t.dec - query.dec) < 0.001,
   );
   const fieldName = target?.name || "Custom sky field";
+  const loadedFieldKey = useRef("");
   const load = useCallback(
     async (q: Query, source?: LoadSource, candidate?: Candidate) => {
       controller.current?.abort();
@@ -399,7 +408,11 @@ export default function App() {
         if (example >= 0) params.set("example", String(example));
       }
       if (candidate) params.set("evidence", candidate.id);
-      history.replaceState(null, "", `?${params}`);
+      const key = fieldKey(params);
+      loadedFieldKey.current = key;
+      const locationParams = new URLSearchParams(params);
+      locationParams.set("page", initialPage());
+      history.replaceState(null, "", `?${locationParams}`);
       try {
         if (source?.kind === "recorded") {
           const packet = await request<Packet>(source.path, { signal });
@@ -409,17 +422,13 @@ export default function App() {
               "The recorded example contains no usable exposures.",
             );
           const measuredField = packet.search.query;
-          const actualParams = new URLSearchParams(
-            Object.entries(measuredField).map(([key, value]) => [
-              key,
-              String(value),
-            ]),
-          );
-          actualParams.set(
-            "example",
-            String(EXAMPLE_PATHS.indexOf(source.path)),
-          );
-          history.replaceState(null, "", `?${actualParams}`);
+          const actualParams = new URLSearchParams(location.search);
+          if (fieldKey(actualParams) === key) {
+            for (const [name, value] of Object.entries(measuredField))
+              actualParams.set(name, String(value));
+            loadedFieldKey.current = fieldKey(actualParams);
+            history.replaceState(null, "", `?${actualParams}`);
+          }
           setQuery(measuredField);
           setDraft(measuredField);
           setRaText(String(measuredField.ra));
@@ -542,68 +551,87 @@ export default function App() {
     [],
   );
   useEffect(() => {
-    const parameters = new URLSearchParams(location.search);
-    if (
-      ["home", "survey", "atlas", "stats", "solar", "methods"].includes(
-        initialPage(),
+    let lookup: AbortController | undefined;
+    const openLocationField = (useLoadedField = false) => {
+      lookup?.abort();
+      const parameters = new URLSearchParams(location.search);
+      if (
+        ["home", "survey", "atlas", "stats", "solar", "methods"].includes(
+          initialPage(),
+        )
       )
-    )
-      return;
-    const query = initialQuery();
-    const evidenceId = parameters.get("evidence");
-    if (evidenceId) {
-      const lookup = new AbortController();
-      request<SurveySnapshot>("/survey.json", { signal: lookup.signal })
-        .then((snapshot) => {
-          if (lookup.signal.aborted) return;
-          const exact = snapshot.candidates.find(
-            (candidate) => candidate.id === evidenceId,
-          );
-          if (!exact?.field || !exact.observations.length)
-            throw new Error(
-              "This finding is unavailable in the currently published survey.",
-            );
-          void load(
-            exact.field,
-            {
-              kind: "fits",
-              urls: exact.observations.map((o) => o.url),
-              label: "Exact survey evidence selected by source URL.",
-              pixels: exact.analysisPixels,
-            },
-            exact,
-          );
+        return;
+      if (useLoadedField && fieldKey(parameters) === loadedFieldKey.current)
+        return;
+      const query = initialQuery();
+      const evidenceId = parameters.get("evidence");
+      if (evidenceId) {
+        const requestController = new AbortController();
+        lookup = requestController;
+        request<SurveySnapshot>("/survey.json", {
+          signal: requestController.signal,
         })
-        .catch((error) => {
-          if (!lookup.signal.aborted) setError((error as Error).message);
-        });
-      return () => {
-        lookup.abort();
-        controller.current?.abort();
-      };
-    }
-    const example = parameters.get("example");
-    if (example !== null && EXAMPLE_PATHS[Number(example)]) {
-      void load(query, {
-        kind: "recorded",
-        path: EXAMPLE_PATHS[Number(example)],
-      });
-    } else if (parameters.has("ra") || parameters.has("dec")) {
-      const ra = parameters.get("ra") ?? "";
-      const dec = parameters.get("dec") ?? "";
-      try {
-        void load({
-          ...query,
-          ra: parseCoordinate(ra, "ra"),
-          dec: parseCoordinate(dec, "dec"),
-        });
-      } catch (error) {
-        setRaText(ra);
-        setDecText(dec);
-        setInputError((error as Error).message);
+          .then((snapshot) => {
+            if (requestController.signal.aborted) return;
+            const exact = snapshot.candidates.find(
+              (candidate) => candidate.id === evidenceId,
+            );
+            if (!exact?.field || !exact.observations.length)
+              throw new Error(
+                "This finding is unavailable in the currently published survey.",
+              );
+            void load(
+              exact.field,
+              {
+                kind: "fits",
+                urls: exact.observations.map((o) => o.url),
+                label: "Exact survey evidence selected by source URL.",
+                pixels: exact.analysisPixels,
+              },
+              exact,
+            );
+          })
+          .catch((error) => {
+            if (!requestController.signal.aborted)
+              setError((error as Error).message);
+          });
+        return;
       }
-    } else void load(query, { kind: "recorded", path: EXAMPLE_PATHS[0] });
-    return () => controller.current?.abort();
+      const example = parameters.get("example");
+      if (example !== null && EXAMPLE_PATHS[Number(example)]) {
+        void load(query, {
+          kind: "recorded",
+          path: EXAMPLE_PATHS[Number(example)],
+        });
+      } else if (parameters.has("ra") || parameters.has("dec")) {
+        const ra = parameters.get("ra") ?? "";
+        const dec = parameters.get("dec") ?? "";
+        try {
+          void load({
+            ...query,
+            ra: parseCoordinate(ra, "ra"),
+            dec: parseCoordinate(dec, "dec"),
+          });
+        } catch (error) {
+          setRaText(ra);
+          setDecText(dec);
+          setInputError((error as Error).message);
+        }
+      } else void load(query, { kind: "recorded", path: EXAMPLE_PATHS[0] });
+    };
+    openLocationField();
+    const pop = () => {
+      setPage(initialPage());
+      setSpatialFocus(initialFocus());
+      setPlaying(false);
+      openLocationField(true);
+    };
+    window.addEventListener("popstate", pop);
+    return () => {
+      window.removeEventListener("popstate", pop);
+      lookup?.abort();
+      controller.current?.abort();
+    };
   }, [load]);
   useEffect(() => {
     if (!playing || timeline.length < 2) return;
@@ -715,11 +743,11 @@ export default function App() {
   }
   function chooseTarget(index: number) {
     const target = TARGETS[index];
+    navigate("observe");
     void load(
       { ra: target.ra, dec: target.dec, detector: index === 2 ? 6 : 1, fov: 5 },
       { kind: "recorded", path: EXAMPLE_PATHS[index] },
     );
-    navigate("observe");
   }
   function submitField(source?: LoadSource) {
     try {
@@ -729,8 +757,8 @@ export default function App() {
         throw new Error(
           "Choose the detector used by the FITS files before loading them.",
         );
-      void load({ ...draft, ra, dec }, source);
       navigate("observe");
+      void load({ ...draft, ra, dec }, source);
     } catch (error) {
       setInputError((error as Error).message);
     }
@@ -746,6 +774,7 @@ export default function App() {
       });
       return;
     }
+    navigate(view);
     const field = candidate.field;
     const urls = candidate.observations.map((o) => o.url);
     if (field && urls.length) {
@@ -762,7 +791,6 @@ export default function App() {
     } else {
       setCandidateContext(candidate);
     }
-    navigate(view);
   }
   function saveNote() {
     if (!note.trim()) {
@@ -907,15 +935,6 @@ export default function App() {
       setWorking("");
     }
   }
-  useEffect(() => {
-    const pop = () => {
-      setPage(initialPage());
-      setSpatialFocus(initialFocus());
-      setPlaying(false);
-    };
-    window.addEventListener("popstate", pop);
-    return () => window.removeEventListener("popstate", pop);
-  }, []);
   const trialPixels =
     showTrack && frame && candidateContext?.evidence.epochMeasurements?.length
       ? candidateContext.evidence.epochMeasurements.flatMap((epoch) => {
@@ -981,7 +1000,10 @@ export default function App() {
               >
                 Observation desk
               </button>
-              <button className="mobile-desk" onClick={() => navigate("methods")}>
+              <button
+                className="mobile-desk"
+                onClick={() => navigate("methods")}
+              >
                 Methods and provenance
               </button>
             </nav>
@@ -1823,8 +1845,8 @@ export default function App() {
                   focus={spatialFocus}
                   onCandidate={openCandidateId}
                   onNavigate={(ra, dec) => {
-                    void load({ ...query, ra, dec, detector: 0 });
                     navigate("observe");
+                    void load({ ...query, ra, dec, detector: 0 });
                   }}
                 />
               </Suspense>
@@ -1856,8 +1878,8 @@ export default function App() {
                   focus={spatialFocus?.id ? spatialFocus : undefined}
                   onCandidate={openCandidateId}
                   onObserve={(ra, dec) => {
-                    void load({ ...query, ra, dec, detector: 0 });
                     navigate("observe");
+                    void load({ ...query, ra, dec, detector: 0 });
                   }}
                 />
               </Suspense>

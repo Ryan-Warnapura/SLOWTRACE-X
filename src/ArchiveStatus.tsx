@@ -17,6 +17,10 @@ export default function ArchiveStatus({
   onDetector: (detector: number) => void;
 }) {
   const coverageIncomplete = search.searchCoverage?.complete === false;
+  const autoDetector =
+    search.requestedDetector === 0 && search.query.detector > 0
+      ? search.query.detector
+      : null;
   const choices =
     search.detectorOptions?.filter(
       (choice) => choice.detector !== search.query.detector,
@@ -43,16 +47,21 @@ export default function ArchiveStatus({
   else if (coverageIncomplete)
     message =
       "Viewing real NASA exposures from a partial archive search. More observations may exist than are listed here.";
-  if (!message && !choices.length) return null;
+  if (!message && !choices.length && !autoDetector) return null;
   return (
     <section
       className="archive-recovery"
       aria-label="Archive coverage and detector options"
     >
-      {message && (
+      {(message || autoDetector) && (
         <div className="archive-recovery-message" role="status">
           <CircleHelp size={16} />
-          <span>{message}</span>
+          <span>
+            {autoDetector && (
+              <strong>Auto selected detector D{autoDetector}. </strong>
+            )}
+            {message || `${loaded} NASA exposures loaded.`}
+          </span>
           {(!loaded || failed > 0 || coverageIncomplete) && (
             <button className="secondary" onClick={onRetry}>
               <RotateCw size={13} /> Retry lookup

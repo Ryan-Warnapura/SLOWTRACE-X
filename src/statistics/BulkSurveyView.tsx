@@ -69,6 +69,10 @@ export default function BulkSurveyView({
   }
 
   const { goal, summary, coverage, inventory, ledgerUrl } = snapshot;
+  const incompleteCatalog =
+    finite(summary.catalogCompleted) && finite(summary.investigated)
+      ? summary.investigated - summary.catalogCompleted
+      : null;
   const completion = summary.uniqueProcessed / goal;
   const progress = new Intl.NumberFormat("en-CA", {
     maximumFractionDigits: 4,
@@ -96,15 +100,12 @@ export default function BulkSurveyView({
     ["Processing retries", summary.retries],
   ] as const;
   const motionRows = [
-    ["Distinct images used in DeepTrace", summary.motionInputs],
-    ["Regions searched with DeepTrace", summary.regionsAnalyzed],
     ["Regions waiting for DeepTrace", summary.fieldsPending],
     ["Incomplete region searches", summary.fieldsIncomplete],
     ["Unsearched planned regions", summary.fieldsUnsearched],
     ["Regions waiting for compatible epochs", summary.fieldsWaitingEpochs],
     ["Regions with a processing error", summary.fieldsFailed],
     ["Completed searches with zero peaks", summary.fieldsEmpty],
-    ["Candidate peaks", summary.candidates],
     ["Catalog investigations recorded", summary.investigated],
     ["Complete Gaia and JPL investigations", summary.catalogCompleted],
     ["Catalog-check attempts", summary.catalogAttempts],
@@ -121,11 +122,7 @@ export default function BulkSurveyView({
               <Database size={14} /> NASA SPHEREx DR1 + QR3
             </span>
             <h2 id="bulk-title">Large archive survey</h2>
-            <p>
-              Full detector images processed independently of the public site.
-              One detector observation counts once after its image analysis is
-              recorded.
-            </p>
+            <p>Measured results from the published SPHEREx survey batches.</p>
           </div>
           <div className="stats-intro-meta">
             <span>Published {absoluteTime(snapshot.generatedAt)} UTC</span>
@@ -142,7 +139,7 @@ export default function BulkSurveyView({
         <div className="bulk-survey-progress">
           <div>
             <strong>{number(summary.uniqueProcessed)}</strong>
-            <span> / {number(goal)} unique observations</span>
+            <span> / {number(goal)} unique NASA images processed</span>
           </div>
           <span>{progress}</span>
         </div>
@@ -151,12 +148,63 @@ export default function BulkSurveyView({
           max={goal}
           aria-label="Unique observations completed toward the survey goal"
         />
+        <p>
+          Each observation and detector pair counts once after full-image
+          processing.
+        </p>
         {unavailable && (
           <p>
             The most recent refresh failed. Showing the last published totals.
           </p>
         )}
       </section>
+
+      <div className="bulk-results" aria-label="Verified survey results">
+        <section className="bulk-result-card">
+          <h3>
+            <Telescope size={16} /> Usable image coverage
+          </h3>
+          <strong>
+            {number(coverage.areaSquareDegrees, areas)} <small>deg²</small>
+          </strong>
+          <p>
+            Overlapping areas count once. Estimated from the native image
+            quality masks.
+          </p>
+        </section>
+        <section className="bulk-result-card bulk-result-motion">
+          <h3>
+            <Crosshair size={16} /> DeepTrace motion search
+          </h3>
+          <dl>
+            <div>
+              <dt>Images used</dt>
+              <dd>{number(summary.motionInputs)}</dd>
+            </div>
+            <div>
+              <dt>Sky regions searched</dt>
+              <dd>{number(summary.regionsAnalyzed)}</dd>
+            </div>
+          </dl>
+          <p>
+            <b>{number(coverage.motionAreaSquareDegrees, areas)} deg²</b> of
+            common usable coverage across compatible epochs.
+          </p>
+        </section>
+        <section className="bulk-result-card bulk-result-review">
+          <h3>
+            <Activity size={16} /> Candidate review
+          </h3>
+          <strong>
+            {number(summary.candidates)} <small>preliminary peaks</small>
+          </strong>
+          <p>
+            {number(summary.investigated)} investigated ·{" "}
+            {number(incompleteCatalog)} catalog checks incomplete ·{" "}
+            {number(summary.knownMatches)} catalog-consistent matches.
+          </p>
+        </section>
+      </div>
 
       <div className="bulk-survey-grid">
         <section className="stats-panel bulk-survey-panel">
@@ -184,7 +232,7 @@ export default function BulkSurveyView({
         <section className="stats-panel bulk-survey-panel">
           <div className="stats-panel-header">
             <h3>
-              <Globe2 size={17} /> Surveyed area
+              <Globe2 size={17} /> How coverage is measured
             </h3>
           </div>
           <dl className="bulk-survey-area">
