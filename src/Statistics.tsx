@@ -30,6 +30,7 @@ import {
   YAxis,
 } from "recharts";
 import type { Candidate } from "./surveyTypes";
+import BulkSurveyView from "./statistics/BulkSurveyView";
 import {
   candidateSpeed,
   dateOfMjd,
@@ -80,14 +81,54 @@ interface Props {
   onLab?: () => void;
 }
 
-const sections = ["Survey", "Detections", "Validation"] as const;
+const sections = [
+  "Large archive survey",
+  "Survey fields",
+  "Detections",
+  "Validation",
+] as const;
 type Section = (typeof sections)[number];
+type PilotSection = Exclude<Section, "Large archive survey">;
 
-export default function Statistics({ onCandidate, onAtlas, onLab }: Props) {
+export default function Statistics(props: Props) {
+  const [section, setSection] = useState<Section>("Large archive survey");
+  return (
+    <div className="statistics-center">
+      <div className="stats-toolrow">
+        <nav className="stats-tabs" aria-label="Statistics views">
+          {sections.map((name) => (
+            <button
+              type="button"
+              key={name}
+              aria-pressed={section === name}
+              onClick={() => setSection(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </nav>
+        <span className="stats-scope">
+          <span /> Published survey records
+        </span>
+      </div>
+      {section === "Large archive survey" ? (
+        <BulkSurveyView onAtlas={props.onAtlas} />
+      ) : (
+        <PilotStatistics {...props} section={section} />
+      )}
+    </div>
+  );
+}
+
+function PilotStatistics({
+  onCandidate,
+  onAtlas,
+  onLab,
+  section,
+}: Props & { section: PilotSection }) {
   const [snapshot, setSnapshot] = useState<StatisticsSnapshot | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
-  const [section, setSection] = useState<Section>("Survey");
   useEffect(() => {
     const controller = new AbortController();
     fetch("/survey.json", { signal: controller.signal })
@@ -188,25 +229,7 @@ export default function Statistics({ onCandidate, onAtlas, onLab }: Props) {
         />
       </div>
 
-      <div className="stats-toolrow">
-        <nav className="stats-tabs" aria-label="Statistics views">
-          {sections.map((name) => (
-            <button
-              type="button"
-              key={name}
-              aria-pressed={section === name}
-              onClick={() => setSection(name)}
-            >
-              {name}
-            </button>
-          ))}
-        </nav>
-        <span className="stats-scope">
-          <span /> Published snapshot
-        </span>
-      </div>
-
-      {section === "Survey" && (
+      {section === "Survey fields" && (
         <SurveyView snapshot={snapshot} onAtlas={onAtlas} />
       )}
       {section === "Detections" && (
@@ -1023,7 +1046,8 @@ const distributionMetrics = {
 };
 
 function DetectionDistribution({ candidates }: { candidates: Candidate[] }) {
-  const [metric, setMetric] = useState<keyof typeof distributionMetrics>("speed");
+  const [metric, setMetric] =
+    useState<keyof typeof distributionMetrics>("speed");
   const { name, unit, get } = distributionMetrics[metric];
   const precision = metric === "speed" ? 5 : 2;
   const bins = distribution(candidates.map(get)).map((item) => ({
@@ -1058,20 +1082,49 @@ function DetectionDistribution({ candidates }: { candidates: Candidate[] }) {
       {bins.length ? (
         <div className="stats-chart" aria-label={`${title} histogram`}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={bins} margin={{ top: 6, right: 12, bottom: 26, left: 4 }}>
-              <CartesianGrid stroke={chartGrid} strokeDasharray="3 6" vertical={false} />
-              <XAxis dataKey="from" tick={tick} tickFormatter={(value) => label(value, precision)} label={smallAxisLabel(title)} />
+            <BarChart
+              data={bins}
+              margin={{ top: 6, right: 12, bottom: 26, left: 4 }}
+            >
+              <CartesianGrid
+                stroke={chartGrid}
+                strokeDasharray="3 6"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="from"
+                tick={tick}
+                tickFormatter={(value) => label(value, precision)}
+                label={smallAxisLabel(title)}
+              />
               <YAxis allowDecimals={false} tick={tick} width={30} />
-              <Tooltip cursor={{ fill: "#21344b" }} content={({ active, payload }) => {
-                const bin = payload?.[0]?.payload as (typeof bins)[number] | undefined;
-                return active && bin ? (
-                  <ChartTip heading={title} values={[
-                    ["Interval", bin.from === bin.to ? bin.first : `${bin.first} to ${bin.last}`],
-                    ["Retained peaks", number.format(bin.count)],
-                  ]} />
-                ) : null;
-              }} />
-              <Bar dataKey="count" fill="#72dcf4" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+              <Tooltip
+                cursor={{ fill: "#21344b" }}
+                content={({ active, payload }) => {
+                  const bin = payload?.[0]?.payload as
+                    (typeof bins)[number] | undefined;
+                  return active && bin ? (
+                    <ChartTip
+                      heading={title}
+                      values={[
+                        [
+                          "Interval",
+                          bin.from === bin.to
+                            ? bin.first
+                            : `${bin.first} to ${bin.last}`,
+                        ],
+                        ["Retained peaks", number.format(bin.count)],
+                      ]}
+                    />
+                  ) : null;
+                }}
+              />
+              <Bar
+                dataKey="count"
+                fill="#72dcf4"
+                radius={[3, 3, 0, 0]}
+                isAnimationActive={false}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

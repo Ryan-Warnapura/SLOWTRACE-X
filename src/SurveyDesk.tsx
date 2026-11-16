@@ -14,6 +14,7 @@ import {
   Telescope,
 } from "lucide-react";
 import { date, download, fmt, post, request } from "./lib";
+import { useBulkSurvey } from "./bulkSurvey";
 import type {
   Candidate,
   Investigation,
@@ -50,6 +51,7 @@ export default function SurveyDesk({
   manual: InvestigationInput | null;
   onOpen: (candidate: Candidate, view: View) => void;
 }) {
+  const bulk = useBulkSurvey();
   const [snapshot, setSnapshot] = useState<SurveySnapshot | null>(null);
   const [snapshotError, setSnapshotError] = useState("");
   const [selected, setSelected] = useState(
@@ -172,9 +174,16 @@ export default function SurveyDesk({
           </span>
           <h2>{snapshot.label}</h2>
           <p className="caption">
-            Published {when(snapshot.generatedAt)}. The dashboard shows the
-            latest published batch.
+            Published {when(snapshot.generatedAt)}. Candidate records reflect
+            completed motion searches.
           </p>
+          {bulk.snapshot && (
+            <p className="caption">
+              {bulk.snapshot.summary.uniqueProcessed.toLocaleString()} unique
+              detector observations processed in the{" "}
+              <a href="/?page=stats">large archive survey</a>.
+            </p>
+          )}
         </div>
         <button
           className="secondary"

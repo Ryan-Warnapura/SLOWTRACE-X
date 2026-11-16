@@ -865,3 +865,35 @@
     text-align: left;
   }
 }
+
+.sky-atlas-bulk {
+  stroke: #58e8bc;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  fill: none;
+  filter: drop-shadow(0 0 2px #0a443e);
+}
+
+.sky-atlas-bulk-key {
+  display: inline-block;
+  width: 10px;
+  height: 7px;
+  margin-inline-end: 6px;
+  border: 1px solid #58e8bc;
+  border-radius: 1px;
+}
+
+.sky-atlas-mark.field[data-status="complete"] {
+  stroke: #72e7f8;
+}
+.sky-atlas-mark.field[data-status="queued"],
+.sky-atlas-mark.field[data-status="empty"] {
+  stroke: #9ba8b9;
+}
+.sky-atlas-mark.field[data-status="incomplete"] {
+  stroke: #c8a9ff;
+}
+.sky-atlas-mark.field[data-status="error"] {
+  stroke: #ff9985;
+}

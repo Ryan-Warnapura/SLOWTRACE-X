@@ -44,6 +44,7 @@ import {
 import type { Camera, Point, Sky, View } from "./atlas/geometry";
 import type { Query, Target } from "./types";
 import type { SurveySnapshot } from "./surveyTypes";
+import { useBulkSurvey } from "./bulkSurvey";
 import "./atlas.css";
 
 const opticalSource = "https://svs.gsfc.nasa.gov/4851/";
@@ -57,7 +58,8 @@ const navLayers = {
   galactic: { label: "Galactic plane", defaultOn: false },
   targets: { label: "Challenge targets", defaultOn: true },
   objects: { label: "Catalog landmarks", defaultOn: true },
-  fields: { label: "Survey fields", defaultOn: false },
+  fields: { label: "DeepTrace fields", defaultOn: false },
+  bulk: { label: "Processed image footprints", defaultOn: true },
   candidates: { label: "Survey candidates", defaultOn: false },
   tracks: { label: "Candidate epoch positions", defaultOn: false },
 } as const;
@@ -155,6 +157,7 @@ export default function Atlas({
     focus?.label ? { ...freeMark(start), name: focus.label } : freeMark(start),
   );
   const [layers, setLayers] = useState<Layers>(initialLayers);
+  const bulk = useBulkSurvey(layers.bulk);
   const [backdrop, setBackdrop] = useState<Backdrop>("optical");
   const [stars, setStars] = useState(true);
   const [milkyWay, setMilkyWay] = useState(true);
@@ -402,6 +405,21 @@ export default function Atlas({
         : [],
     }),
     [candidateMarks, layers, projection, width],
+  );
+  const footprintPath = useMemo(
+    () =>
+      layers.bulk
+        ? (bulk.snapshot?.footprints ?? [])
+            .slice(0, 1000)
+            .map((footprint) => {
+              const first = footprint.boundary[0];
+              return first
+                ? drawPath([...footprint.boundary, first], projection, width)
+                : "";
+            })
+            .join("")
+        : "",
+    [bulk.snapshot, layers.bulk, projection, width],
   );
   const gridLabels = layers.coordinates
     ? Array.from({ length: 12 }, (_, index) => {
@@ -739,6 +757,15 @@ export default function Atlas({
                     {snapshotUnavailable && (
                       <p>Recorded survey records are unavailable.</p>
                     )}
+                    {layers.bulk && bulk.unavailable && !bulk.snapshot && (
+                      <p>Processed image footprints are unavailable.</p>
+                    )}
+                    {layers.fields && (
+                      <p>
+                        DeepTrace fields: cyan for completed, grey for waiting
+                        or empty, lavender for incomplete, coral for error.
+                      </p>
+                    )}
                     {layers.tracks && (
                       <p>
                         Positions saved by the survey may be trial-track
@@ -883,6 +910,9 @@ export default function Atlas({
               {outlines.galactic && (
                 <path className="sky-atlas-galactic" d={outlines.galactic} />
               )}
+              {footprintPath && (
+                <path className="sky-atlas-bulk" d={footprintPath} />
+              )}
               {outlines.tracks.map(({ id, path }) => (
                 <path className="sky-atlas-track" key={id} d={path} />
               ))}
@@ -891,6 +921,7 @@ export default function Atlas({
                   key={mark.id}
                   transform={`translate(${x},${y})`}
                   className={`sky-atlas-mark ${mark.kind}`}
+                  data-status={mark.kind === "field" ? mark.status : undefined}
                 >
                   <MarkSymbol kind={mark.kind} />
                   {mark.kind === "target" && !closePosition(mark, selected) && (
@@ -926,6 +957,9 @@ export default function Atlas({
                 }}
               >
                 {hover.mark.name}
+                {hover.mark.kind === "field" &&
+                  hover.mark.status &&
+                  ` · ${displayStatus(hover.mark.status)}`}
               </span>
             )}
             <span id="sky-atlas-help" className="sky-atlas-visually-hidden">
@@ -1123,6 +1157,21 @@ export default function Atlas({
               "ICRS coordinates · Imagery off"
             )}
           </span>
+          {layers.bulk && bulk.snapshot && (
+            <span className="sky-atlas-survey-note">
+              <span className="sky-atlas-bulk-key" />
+              {Math.min(
+                bulk.snapshot.footprints.length,
+                1000,
+              ).toLocaleString()}{" "}
+              detector footprints shown
+              {(bulk.snapshot.coverage.footprintsTruncated ||
+                bulk.snapshot.footprints.length > 1000) &&
+                " · map subset"}
+              {" · WCS image outlines "}
+              <a href="/?page=stats">Survey area and methods</a>
+            </span>
+          )}
           {snapshot && (layers.fields || layers.candidates) && (
             <span className="sky-atlas-survey-note">
               Published snapshot {snapshot.generatedAt.slice(0, 10)} ·{" "}

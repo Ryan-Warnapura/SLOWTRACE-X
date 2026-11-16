@@ -1,3 +1,5 @@
+import type { Candidate } from "../surveyTypes";
+
 export type Vector = [number, number, number];
 export type Sample = [number, ...Vector];
 export type CandidateDirection = {
@@ -77,4 +79,89 @@ export function skyVector(ra: number, dec: number): Vector {
   const a = (ra * Math.PI) / 180;
   const d = (dec * Math.PI) / 180;
   return [Math.cos(d) * Math.cos(a), Math.cos(d) * Math.sin(a), Math.sin(d)];
+}
+
+interface SolarAssociation {
+  name: string;
+  evidenceUrl: string;
+  bodyId?: string;
+}
+
+function horizonsTarget(source: string) {
+  let url;
+  try {
+    url = new URL(source);
+  } catch {
+    return null;
+  }
+  if (
+    url.origin !== "https://ssd.jpl.nasa.gov" ||
+    url.pathname !== "/api/horizons.api"
+  )
+    return null;
+  const command = url.searchParams
+    .get("COMMAND")
+    ?.trim()
+    .replace(/^'|'$/g, "")
+    .toUpperCase();
+  if (!command) return null;
+  if (/^DES=(3I|C\/2025 N1);(?:CAP;NOFRAG)?$/.test(command)) return "DES=3I;";
+  return command === "DES=1;" ? "1;" : command;
+}
+
+function isRobustTrack(entry: unknown): entry is {
+  name: string;
+  url: string;
+} {
+  if (!entry || typeof entry !== "object") return false;
+  const track = entry as Record<string, unknown>;
+  const samples: unknown[] = Array.isArray(track.samples) ? track.samples : [];
+  return (
+    track.status === "ok" &&
+    typeof track.name === "string" &&
+    typeof track.url === "string" &&
+    samples.length >= 2 &&
+    new Set(
+      samples.flatMap((sample) =>
+        sample &&
+        typeof sample === "object" &&
+        "mjd" in sample &&
+        typeof sample.mjd === "number" &&
+        Number.isFinite(sample.mjd)
+          ? [sample.mjd]
+          : [],
+      ),
+    ).size === samples.length &&
+    track.withinTolerance === samples.length &&
+    samples.every(
+      (sample) =>
+        sample &&
+        typeof sample === "object" &&
+        "observerRobust" in sample &&
+        sample.observerRobust === true,
+    )
+  );
+}
+
+export function solarAssociation(
+  candidate: Candidate | null,
+  bodies: SolarEphemerides["bodies"],
+): SolarAssociation | null {
+  const check = candidate?.catalogInvestigation ?? candidate?.investigation;
+  const horizons: unknown = check?.jpl?.horizons;
+  if (
+    check?.classification !== "catalog-consistent" ||
+    check.jpl?.status !== "ok" ||
+    !Array.isArray(horizons)
+  )
+    return null;
+  const robust = (horizons as unknown[]).filter(isRobustTrack);
+  if (robust.length !== 1) return null;
+  const [match] = robust;
+  const command = horizonsTarget(match.url);
+  if (!command) return null;
+  const bodyId = Object.entries(bodies).find(
+    ([, body]) => horizonsTarget(body.source) === command,
+  )?.[0];
+  return { name: match.name, evidenceUrl: match.url, bodyId };
 }

@@ -202,11 +202,11 @@ class SurveyStore:
         self.db.execute("INSERT OR IGNORE INTO investigations VALUES (?,?,?)",
                         (candidate_id, result["checkedAt"], canonical(result)))
 
-    def snapshot(self, survey_id):
+    def snapshot(self, survey_id, max_fields=None):
         with self.transaction(write=False):
-            return self._snapshot(survey_id)
+            return self._snapshot(survey_id, max_fields)
 
-    def _snapshot(self, survey_id):
+    def _snapshot(self, survey_id, max_fields):
         survey = self.db.execute("SELECT * FROM surveys WHERE id=?", (survey_id,)).fetchone()
         if survey is None:
             raise ValueError("Survey ID not found in this database.")
@@ -215,7 +215,12 @@ class SurveyStore:
         summary = dict(planned=0, queued=0, running=0, complete=0, empty=0, incomplete=0,
                        errors=0, candidates=0, uniqueExposuresAnalyzed=0, fieldExposuresAnalyzed=0,
                        usablePixelSamples=0, trialGridPositions=0, elapsedSeconds=0)
-        for row in self.db.execute("SELECT * FROM fields WHERE survey_id=? ORDER BY rowid", (survey_id,)):
+        rows = self.db.execute(
+            "SELECT * FROM fields WHERE survey_id=? ORDER BY rowid " +
+            ("DESC LIMIT ?" if max_fields is not None else ""),
+            (survey_id, max_fields) if max_fields is not None else (survey_id,),
+        ).fetchall()
+        for row in rows:
             history = []
             for a in self.db.execute("SELECT * FROM attempts WHERE field_id=? ORDER BY number DESC", (row["id"],)):
                 report = json.loads(a["report"]) if a["report"] else {"status": "running"}
@@ -227,8 +232,13 @@ class SurveyStore:
             summary["errors" if row["status"] == "error" else row["status"]] += 1
         unique_sources = set()
         products = {}
+        args = [survey_id]
+        filter_fields = ""
+        if max_fields is not None:
+            filter_fields = " AND f.id IN (" + ",".join("?" for _ in rows) + ")"
+            args.extend(row["id"] for row in rows)
         for row in self.db.execute("""SELECT a.* FROM analyses a JOIN fields f ON f.id=a.field_id
-                WHERE f.survey_id=?""", (survey_id,)):
+                WHERE f.survey_id=?""" + filter_fields, args):
             product = json.loads(row["payload"])
             products[product["id"]] = product
             unique_sources.update(o["url"] for o in product["observations"])
@@ -237,7 +247,7 @@ class SurveyStore:
             summary["trialGridPositions"] += product["trialGridPositions"]
         candidates = []
         for row in self.db.execute("""SELECT c.* FROM candidates c JOIN analyses a ON c.analysis_id=a.id
-                JOIN fields f ON a.field_id=f.id WHERE f.survey_id=?""", (survey_id,)):
+                JOIN fields f ON a.field_id=f.id WHERE f.survey_id=?""" + filter_fields, args):
             candidate = json.loads(row["payload"])
             checks = [json.loads(i["payload"]) for i in self.db.execute(
                 "SELECT payload FROM investigations WHERE candidate_id=? ORDER BY checked_at", (candidate["id"],))]

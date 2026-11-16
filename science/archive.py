@@ -608,5 +608,6 @@ def as_list(array):
 
 
 @lru_cache(maxsize=32)
-def frame(url, ra, dec, fov=5, pixels=96):
+def frame(url, ra, dec, fov=5, pixels=96, *, native_sha=None):
+    """Use the optional verified native hash to separate revisions at the same URL in the cache."""
     return _read_frame(url, ra, dec, fov, pixels)

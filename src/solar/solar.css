@@ -444,3 +444,23 @@
     display: none;
   }
 }
+
+.solar-catalog-context {
+  padding: 11px;
+  margin-top: 13px;
+  background: #101f32;
+  border: 1px solid #2b455c;
+  border-radius: 8px;
+}
+
+.solar-catalog-context strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #dff5ff;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.solar-catalog-context .solar-link-list {
+  margin-top: 8px;
+}

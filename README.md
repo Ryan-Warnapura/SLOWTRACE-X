@@ -35,6 +35,10 @@ The optical atlas uses NASA SVS [Deep Star Maps 2020](https://svs.gsfc.nasa.gov/
 
 ## Run an automated survey
 
+The persistent archive worker inventories SPHEREx DR1 and QR3, processes native detector images in parallel, and plans multi-epoch DeepTrace searches automatically. Statistics counts the unique images actually processed toward the 500,000-image target and separately reports the area searched for motion. See [run, resume and publish the archive survey](docs/bulk-survey.md).
+
+For a small survey of specific coordinates:
+
 ```sh
 python scripts/run_survey.py --name "SPHEREx pilot" --challenge --grid 269.5862 4.76883 3 3 1 --max-fields 8 --investigate 3
 ```

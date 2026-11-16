@@ -18,12 +18,14 @@ import {
   Telescope,
 } from "lucide-react";
 import { download, fmt, request } from "./lib";
+import type { Candidate, SurveySnapshot } from "./surveyTypes";
 import Scene, { type SolarView } from "./solar/Scene";
 import {
   BODY_COLORS,
   currentJD,
   dateForJD,
   positionAt,
+  solarAssociation,
   type CandidateDirection,
   type SolarEphemerides,
 } from "./solar/ephemeris";
@@ -42,6 +44,7 @@ export default function SolarSystem({
 }: SolarSystemProps) {
   const [data, setData] = useState<SolarEphemerides | null>(null);
   const [error, setError] = useState("");
+  const [finding, setFinding] = useState<Candidate | null>(null);
   const [retry, setRetry] = useState(0);
   const [selected, setSelected] = useState("earth");
   const [view, setView] = useState<SolarView>(focus ? "direction" : "inner");
@@ -84,6 +87,22 @@ export default function SolarSystem({
       });
     return () => controller.abort();
   }, [retry]);
+
+  useEffect(() => {
+    if (!reference) return;
+    const controller = new AbortController();
+    request<SurveySnapshot>("/survey.json", { signal: controller.signal })
+      .then((record) => {
+        if (!controller.signal.aborted) {
+          setFinding(
+            record.candidates.find((candidate) => candidate.id === reference) ??
+              null,
+          );
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [reference]);
 
   useEffect(() => {
     if (typeof focusRa === "number" && typeof focusDec === "number") {
@@ -166,6 +185,22 @@ export default function SolarSystem({
       </section>
     );
   const dir = view === "direction" && stableFocus;
+  const linkedFinding = finding?.id === reference ? finding : null;
+  const association = solarAssociation(linkedFinding, data.bodies);
+  const matchedId = association?.bodyId;
+  const matchedBody = matchedId ? data.bodies[matchedId] : null;
+  function showCatalogBody() {
+    if (!matchedId || !matchedBody) return;
+    const referenceDay =
+      Math.floor(linkedFinding?.referenceMjd ?? NaN) + 2400000.5;
+    const selectedDay =
+      referenceDay >= start && referenceDay <= end ? referenceDay : jd;
+    const position = positionAt(matchedBody.samples, selectedDay);
+    if (!position) return;
+    setSelected(matchedId);
+    setJD(selectedDay);
+    setMode(Math.hypot(...position) > 6 ? "outer" : "inner");
+  }
   const body = data.bodies[selected];
   const coords =
     selected === "sun" ? [0, 0, 0] : body ? positionAt(body.samples, jd) : null;
@@ -372,6 +407,33 @@ export default function SolarSystem({
                 <dd>Unconstrained</dd>
               </div>
             </dl>
+            {association && (
+              <div className="solar-catalog-context">
+                <strong>Catalog association · {association.name}</strong>
+                <p>
+                  Published position checks support this association at the
+                  measured epochs.{" "}
+                  {matchedBody
+                    ? "Open the catalog object’s sampled heliocentric positions."
+                    : "Open the original JPL observer ephemeris for this target."}
+                </p>
+                <div className="solar-link-list">
+                  {matchedBody && association.bodyId && (
+                    <button className="secondary" onClick={showCatalogBody}>
+                      <Orbit size={15} /> Explore {matchedBody.name} in 3D
+                    </button>
+                  )}
+                  <a
+                    href={association.evidenceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    JPL positions at the measured epochs{" "}
+                    <ExternalLink size={13} />
+                  </a>
+                </div>
+              </div>
+            )}
             <div className="solar-link-list">
               {dir.id && onCandidate && (
                 <button
@@ -436,6 +498,16 @@ export default function SolarSystem({
               ))}
             </div>
             <div className="solar-link-list">
+              {association?.bodyId === selected &&
+                linkedFinding?.id &&
+                onCandidate && (
+                  <button
+                    className="secondary"
+                    onClick={() => onCandidate(linkedFinding.id)}
+                  >
+                    Candidate evidence <ArrowRight size={15} />
+                  </button>
+                )}
               {body && (
                 <a href={body.source} target="_blank" rel="noreferrer">
                   Original Horizons query <ExternalLink size={13} />
