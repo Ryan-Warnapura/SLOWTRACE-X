@@ -1,18 +1,29 @@
 import type { Frame, Query } from "./types";
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+  ) {
+    super(message);
+  }
+}
 export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init);
   if (!r.ok) {
     let message = `Request failed (${r.status})`;
+    let code: string | undefined;
     try {
       const b = await r.json();
-      message =
-        typeof b.detail === "string"
-          ? b.detail
-          : b.error || JSON.stringify(b.detail || b);
+      if (typeof b.detail === "string") message = b.detail;
+      else if (b.detail && typeof b.detail.message === "string") {
+        message = b.detail.message;
+        code = b.detail.code;
+      } else if (typeof b.error === "string") message = b.error;
     } catch {
       /* upstream response is not JSON */
     }
-    throw new Error(message);
+    throw new ApiError(message, r.status, code);
   }
   return r.json();
 }

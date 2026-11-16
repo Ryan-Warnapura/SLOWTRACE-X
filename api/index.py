@@ -25,7 +25,7 @@ def run(function, *args, **kwargs):
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
     except archive.ArchiveError as error:
-        raise HTTPException(503, str(error)) from error
+        raise HTTPException(error.status, {"code": error.code, "message": str(error)}) from error
     except HTTPException:
         raise
     except Exception as error:
@@ -34,7 +34,7 @@ def run(function, *args, **kwargs):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "service": "SLOWTRACE X", "source": "NASA/IPAC IRSA SPHEREx DR1 + QR3", "version": "2.0.0"}
+    return {"status": "ok", "service": "SLOWTRACE X", "source": "NASA/IPAC IRSA SPHEREx DR1 + QR3", "version": "2.1.0"}
 
 
 @app.get("/api/search")

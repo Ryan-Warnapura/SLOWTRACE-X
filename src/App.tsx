@@ -49,6 +49,7 @@ const PlannerChart = lazy(() =>
   import("./Charts").then((m) => ({ default: m.PlannerChart })),
 );
 import Atlas from "./Atlas";
+import ArchiveStatus from "./ArchiveStatus";
 import {
   archiveFitsUrls,
   compareFrames,
@@ -159,7 +160,7 @@ function initialQuery(): Query {
     dec: Number.isFinite(dec) && Math.abs(dec) <= 90 ? dec : TARGETS[0].dec,
     fov: Number.isFinite(fov) && fov >= 2 && fov <= 30 ? fov : 5,
     detector:
-      Number.isInteger(detector) && detector >= 1 && detector <= 6
+      Number.isInteger(detector) && detector >= 0 && detector <= 6
         ? detector
         : 1,
   };
@@ -382,6 +383,8 @@ export default function App() {
               });
         if (signal.aborted || job !== serial.current) return;
         setSearch(found);
+        if (found) setQuery(found.query);
+        const effectiveDetector = found?.query.detector ?? q.detector;
         const urls =
           source?.kind === "fits"
             ? source.urls
@@ -390,10 +393,12 @@ export default function App() {
         let cursor = 0;
         let done = 0;
         let passed = 0;
+        let timelineMin = Infinity;
+        let timelineMax = -Infinity;
         const observations: Observation[] = [];
-        const worker = async () => {
-          while (cursor < urls.length && !signal.aborted) {
-            const url = urls[cursor++];
+        const worker = async (batch: string[]) => {
+          while (cursor < batch.length && !signal.aborted) {
+            const url = batch[cursor++];
             try {
               const frameParams = new URLSearchParams({
                 url,
@@ -408,11 +413,15 @@ export default function App() {
                 signal,
               });
               if (signal.aborted || job !== serial.current) return;
-              if (loaded.metadata.detector !== q.detector)
+              if (loaded.metadata.detector !== effectiveDetector)
                 throw new Error(
-                  `Detector D${loaded.metadata.detector} does not match the chosen D${q.detector}.`,
+                  `Detector D${loaded.metadata.detector} does not match the chosen D${effectiveDetector}.`,
                 );
               passed++;
+              if (loaded.metadata.badFraction < 0.9) {
+                timelineMin = Math.min(timelineMin, loaded.metadata.mjd);
+                timelineMax = Math.max(timelineMax, loaded.metadata.mjd);
+              }
               observations.push({
                 id: loaded.metadata.id,
                 collection: url.includes("/dr1/")
@@ -440,11 +449,22 @@ export default function App() {
             done++;
             if (!signal.aborted && job === serial.current)
               setProgress(
-                `Loaded ${passed} of ${urls.length} observations (${done} attempted)`,
+                `Loaded ${passed} observation${passed === 1 ? "" : "s"} (${done} attempted)`,
               );
           }
         };
-        await Promise.all([worker(), worker()]);
+        await Promise.all([worker(urls), worker(urls)]);
+        if (job !== serial.current || signal.aborted) return;
+        if (
+          found?.reserveObservations?.length &&
+          passed < 8 &&
+          (passed < 2 || timelineMax - timelineMin < 0.25)
+        ) {
+          const reserve = found.reserveObservations.slice(0, 8 - passed);
+          cursor = 0;
+          setProgress("Trying alternate exposures in this detector…");
+          await worker(reserve.map((o) => o.url));
+        }
         if (job !== serial.current || signal.aborted) return;
         if (source?.kind === "fits")
           setSearch({
@@ -601,6 +621,10 @@ export default function App() {
     try {
       const ra = parseCoordinate(raText, "ra");
       const dec = parseCoordinate(decText, "dec");
+      if (source?.kind === "fits" && draft.detector === 0)
+        throw new Error(
+          "Choose the detector used by the FITS files before loading them.",
+        );
       void load({ ...draft, ra, dec }, source);
       navigate("observe");
     } catch (error) {
@@ -937,6 +961,7 @@ export default function App() {
                     setDraft({ ...draft, detector: Number(e.target.value) })
                   }
                 >
+                  <option value={0}>Auto · compare epochs</option>
                   {DETECTORS.map((d, i) => (
                     <option key={d} value={i + 1}>
                       D{i + 1} · {d} µm
@@ -1031,16 +1056,24 @@ export default function App() {
                 />
               </Suspense>
             )}
-            {!loading && !error && search && frames.length === 0 && (
-              <div className="load-status" role="status">
-                <CircleHelp size={15} />
-                {search.observations.length
-                  ? "None of the selected frames could be retrieved. Check data notes or try another detector."
-                  : search.searchCoverage?.complete === false
-                    ? "The available metadata did not return a match. Some releases were unavailable, so coverage remains unknown."
-                    : "No matching observations returned. Try another detector or field."}
-              </div>
-            )}
+            {page === "observe" &&
+              !loading &&
+              !error &&
+              search &&
+              search.status !== "recorded-observations" && (
+                <ArchiveStatus
+                  search={search}
+                  loaded={frames.length}
+                  failed={failures.length}
+                  onRetry={() =>
+                    void load({
+                      ...query,
+                      detector: search.requestedDetector ?? query.detector,
+                    })
+                  }
+                  onDetector={(detector) => void load({ ...query, detector })}
+                />
+              )}
             {page !== "survey" && (loading || error) && (
               <div
                 className={`load-status ${error ? "error" : ""}`}
@@ -1089,7 +1122,8 @@ export default function App() {
                             ? "RECORDED NASA DATA"
                             : search?.status === "recorded-metadata"
                               ? "NASA PIXELS · RECORDED INDEX"
-                              : search?.status === "partial-live"
+                              : search?.status === "partial-live" ||
+                                  search?.searchCoverage?.complete === false
                                 ? "NASA PIXELS · PARTIAL SEARCH"
                                 : "NASA OBSERVATION"
                           : "AWAITING DATA"}
@@ -1116,7 +1150,9 @@ export default function App() {
                       </div>
                       <div className="toolbar-trailing">
                         <Layers3 size={14} />
-                        <span>D{query.detector}</span>
+                        <span>
+                          {query.detector === 0 ? "Auto" : `D${query.detector}`}
+                        </span>
                         <select
                           aria-label="Colour palette"
                           value={palette}
@@ -1443,7 +1479,11 @@ export default function App() {
                         </div>
                         <div>
                           <dt>Detector band</dt>
-                          <dd>{DETECTORS[query.detector - 1]} µm</dd>
+                          <dd>
+                            {query.detector
+                              ? `${DETECTORS[query.detector - 1]} µm`
+                              : "Automatic"}
+                          </dd>
                         </div>
                         <div>
                           <dt>Local wavelength</dt>
@@ -1569,7 +1609,7 @@ export default function App() {
                 query={query}
                 targets={TARGETS}
                 onNavigate={(ra, dec) => {
-                  void load({ ...query, ra, dec });
+                  void load({ ...query, ra, dec, detector: 0 });
                   navigate("observe");
                 }}
               />
@@ -2045,13 +2085,25 @@ export default function App() {
               </section>
             )}
             {page === "methods" && <Methods />}
-            {(warnings.length > 0 || failures.length > 0) && (
+            {(warnings.length > 0 ||
+              failures.length > 0 ||
+              (search?.attempts?.length ?? 0) > 0) && (
               <details className="warnings">
                 <summary>
                   <CircleHelp size={14} /> Data notes and retrieval details{" "}
                   <span>{warnings.length + failures.length}</span>
                   <ChevronDown size={15} />
                 </summary>
+                {search?.attempts?.map((a, i) => (
+                  <p key={`lookup-${i}`}>
+                    {a.service}
+                    {a.collection ? ` / ${a.collection}` : ""} ·{" "}
+                    {a.httpStatus
+                      ? `HTTP ${a.httpStatus}`
+                      : a.code.replaceAll("-", " ")}
+                    {a.rows !== undefined ? ` · ${a.rows} metadata rows` : ""}
+                  </p>
+                ))}
                 {[...new Set(warnings)].map((w, i) => (
                   <p key={i}>{w}</p>
                 ))}

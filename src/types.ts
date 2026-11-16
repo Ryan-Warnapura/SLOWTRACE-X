@@ -35,6 +35,28 @@ export interface SearchResult {
   queryUrls: string[];
   archiveChecked?: string;
   searchCoverage?: Record<string, unknown>;
+  outcome?:
+    | "observations-found"
+    | "other-detectors"
+    | "no-coverage"
+    | "metadata-incomplete";
+  requestedDetector?: number;
+  reserveObservations?: Observation[];
+  detectorOptions?: {
+    detector: number;
+    count: number;
+    visits: number;
+    firstMjd: number;
+    lastMjd: number;
+  }[];
+  attempts?: {
+    service: string;
+    collection?: string;
+    code: string;
+    httpStatus?: number;
+    rows?: number;
+    retrievedAt?: string;
+  }[];
 }
 export interface Frame {
   width: number;

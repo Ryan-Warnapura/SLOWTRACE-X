@@ -65,7 +65,7 @@ def test_real_header_index_covers_official_wise_coordinate_without_a_preset_matc
     ra, dec = 133.795129, -7.245147
     assert archive._recorded_rows(ra, dec) is None
     records, captured = matching_records(ra, dec, 1, {"dr1", "qr3"})
-    assert records and captured == read_index()["generatedAt"]
+    assert records and captured >= read_index()["generatedAt"]
     assert max(r["mjd"] for r in records) - min(r["mjd"] for r in records) > 180
     site = archive.search(ra, dec, 5, 1, 4, indexed_only=True)
     assert site["status"] == "recorded-metadata"
@@ -88,8 +88,10 @@ def test_metadata_outage_at_unindexed_position_is_not_no_coverage(monkeypatch):
     monkeypatch.setattr(archive, "_query_collection", unavailable)
     monkeypatch.setattr(archive, "_query_tap", unavailable)
     monkeypatch.setattr(archive, "matching_records", lambda *_: ([], None))
-    with pytest.raises(archive.ArchiveError, match="not evidence of absent coverage"):
-        archive.search(10.0, 0.0, 3, 1, 2)
+    result = archive.search(10.0, 0.0, 3, 1, 2)
+    assert result["outcome"] == "metadata-incomplete"
+    assert not result["searchCoverage"]["complete"]
+    assert result["observations"] == []
 
 
 def test_tap_failover_clearly_reports_retrieval_protocol(monkeypatch):

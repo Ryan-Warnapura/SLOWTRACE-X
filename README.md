@@ -2,6 +2,8 @@
 
 SLOWTRACE X is a public observation desk and survey workbench for the NASA Space Apps challenge **Planet X and SPHEREx**. Enter ICRS coordinates as decimal degrees or sexagesimal values, choose a field size and detector, and compare aligned NASA observations. Five recorded examples open immediately with their source URLs, exposure dates, capture times, and checksums. **Search live archive** queries the supported DR1 and QR3 collections and labels any fallback metadata.
 
+Choose **Auto · compare epochs** to prioritize a detector with observations across a long time span. Every query reports other detectors it located and distinguishes incomplete metadata from a completed search with no exposures. The GitHub checkout includes the expanded NASA FITS metadata sample. If you downloaded the public source ZIP, place the separately downloadable [archive sample](https://slowtrace-x.vercel.app/archive-sample.json.gz) at `science/data/archive-sample.json.gz` to enable the expanded offline lookup.
+
 ## Run locally
 
 Use Node.js 22.12+ and Python 3.12. From the repository root, install the dependencies and start an API terminal:

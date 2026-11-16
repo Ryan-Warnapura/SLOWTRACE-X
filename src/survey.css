@@ -26,6 +26,48 @@
 .frame-origin .checksum {
   overflow-wrap: anywhere;
 }
+.archive-recovery {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #39483e;
+  border-radius: 7px;
+  background: #1b2620;
+  color: #bacbb8;
+  font-size: 12px;
+}
+.archive-recovery-message {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  line-height: 1.55;
+}
+.archive-recovery-message span {
+  flex: 1 1 245px;
+}
+.archive-recovery-message + details {
+  margin-top: 10px;
+}
+.archive-recovery summary {
+  cursor: pointer;
+  color: #d3e3bd;
+}
+.detector-options {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+}
+.detector-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.detector-options button span {
+  font-size: 10px;
+  color: #adc4af;
+}
 .compare-controls {
   display: flex;
   flex-wrap: wrap;
