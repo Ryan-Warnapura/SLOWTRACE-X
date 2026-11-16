@@ -45,6 +45,7 @@ import { Tooltip } from "@base-ui/react/tooltip";
 import { toast } from "sonner";
 import SkyCanvas from "./SkyCanvas";
 import EvidenceMaps from "./EvidenceMaps";
+import AladinPanel from "./AladinPanel";
 const SpectrumChart = lazy(() =>
   import("./Charts").then((m) => ({ default: m.SpectrumChart })),
 );
@@ -1655,6 +1656,11 @@ export default function App() {
                       </a>
                     </details>
                   )}
+                  <AladinPanel
+                    ra={query.ra}
+                    dec={query.dec}
+                    fovArcmin={query.fov}
+                  />
                   <details>
                     <summary>About this field</summary>
                     <p>

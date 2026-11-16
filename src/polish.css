@@ -799,3 +799,27 @@ input[type="checkbox"] {
     display: none;
   }
 }
+
+/* Sky context (Aladin Lite) */
+.sky-context-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+.sky-context-view {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #050607;
+}
+.sky-context-view > .ob-note {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  margin: 0;
+}
