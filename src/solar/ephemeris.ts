@@ -27,18 +27,20 @@ export interface SolarEphemerides {
   bodies: Record<string, BodyEphemeris>;
 }
 
+/** Approximate visual tints, warmed to sit in the app palette (DESIGN.md).
+ *  The interstellar object is white: it is the body the page is about. */
 export const BODY_COLORS: Record<string, string> = {
-  sun: "#ffd29a",
-  mercury: "#c5c8ce",
-  venus: "#f9cba4",
-  earth: "#75d7ff",
-  mars: "#ed937d",
-  jupiter: "#e2b89a",
-  saturn: "#f1d096",
-  uranus: "#9be9e7",
-  neptune: "#859cfa",
-  ceres: "#c4adf4",
-  interstellar: "#7af3d6",
+  sun: "#f2d39b",
+  mercury: "#b6b4ad",
+  venus: "#e6d2ab",
+  earth: "#8fb4de",
+  mars: "#d98a6f",
+  jupiter: "#d7b48f",
+  saturn: "#e2cd9a",
+  uranus: "#a8cfcb",
+  neptune: "#8fa0dc",
+  ceres: "#a19f98",
+  interstellar: "#efede6",
 };
 
 const UNITS_PER_DAY = 86400000;

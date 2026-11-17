@@ -139,10 +139,10 @@
   gap: 6px;
 }
 .solar-status-dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #f5a524;
+  background: var(--ok);
 }
 .solar-stage-note {
   bottom: 12px;
@@ -209,9 +209,9 @@
   cursor: default;
 }
 .solar-player .solar-play {
-  background: #f5a524;
-  color: #0b0d0e;
-  border-color: #3a4245;
+  background: var(--text);
+  color: var(--on-text);
+  border-color: var(--text);
   margin-right: 6px;
 }
 .solar-player b {
@@ -404,8 +404,8 @@
     color: #e6e6e6;
   }
   .solar-player .solar-play:hover {
-    color: #0b0d0e !important;
-    background: #f5a524 !important;
+    color: var(--on-text) !important;
+    background: #fff !important;
   }
 }
 @media (max-width: 980px) {
@@ -454,4 +454,42 @@
 
 .solar-catalog-context .solar-link-list {
   margin-top: 8px;
+}
+
+/* Alignment with the design system (DESIGN.md). */
+.solar-workbench .panel,
+.solar-stage-shell,
+.solar-inspector {
+  border-color: var(--rule);
+  border-radius: var(--r-well);
+  background: var(--well);
+}
+.solar-source {
+  color: var(--text-2);
+  font-size: var(--fs-13);
+  font-weight: 400;
+}
+.solar-source svg {
+  display: none;
+}
+.solar-inspector-kicker {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.solar-inspector h2 {
+  font-family: var(--display);
+  font-size: var(--fs-24);
+  font-style: italic;
+  font-weight: 400;
+}
+.solar-canvas,
+.solar-visual {
+  background: var(--deep);
+}
+.solar-stage-note {
+  border-radius: var(--r-key);
+}
+.solar-provenance > svg {
+  display: none;
 }

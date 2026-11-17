@@ -141,7 +141,7 @@ export default function Scene({
     function addMarker(key: string, name: string, position: THREE.Vector3) {
       const marker = new THREE.Mesh(
         new THREE.SphereGeometry(1, 18, 12),
-        new THREE.MeshBasicMaterial({ color: BODY_COLORS[key] ?? "#8ceaff" }),
+        new THREE.MeshBasicMaterial({ color: BODY_COLORS[key] ?? "#efede6" }),
       );
       marker.userData.key = key;
       marker.position.copy(position);
@@ -152,13 +152,13 @@ export default function Scene({
     }
 
     if (view === "direction" && focus) {
-      addLine(circle(1), "#7899c4", 0.34);
-      addLine(circle(1, Math.PI / 2), "#7899c4", 0.34);
+      addLine(circle(1), "#8d8b85", 0.34);
+      addLine(circle(1, Math.PI / 2), "#8d8b85", 0.34);
       addLine(
         circle(1, Math.PI / 2).map((p) =>
           p.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2),
         ),
-        "#7899c4",
+        "#8d8b85",
         0.26,
       );
       addTag("ra0", "0h RA", new THREE.Vector3(1.08, 0, 0));
@@ -168,7 +168,7 @@ export default function Scene({
         unit,
         new THREE.Vector3(),
         1,
-        0x76ebf7,
+        0xefede6,
         0.12,
         0.065,
       );
@@ -182,7 +182,7 @@ export default function Scene({
     } else {
       const rings = view === "inner" ? [1, 2, 3, 5] : [5, 10, 20, 30];
       for (const r of rings) {
-        addLine(circle(r), "#3b6388", 0.22);
+        addLine(circle(r), "#4f545c", 0.3);
         addTag(`ring-${r}`, `${r} au`, new THREE.Vector3(-r, 0, 0));
       }
       for (let i = 0; i < 8; i++) {
@@ -197,8 +197,8 @@ export default function Scene({
               Math.sin(angle) * reach,
             ),
           ],
-          "#244567",
-          0.22,
+          "#2b2e33",
+          0.35,
         );
       }
       addMarker("sun", "Sun", new THREE.Vector3());
@@ -208,7 +208,7 @@ export default function Scene({
           key,
           addLine(
             body.samples.map(([, x, y, z]) => toScene([x, y, z])),
-            BODY_COLORS[key] ?? "#8ceaff",
+            BODY_COLORS[key] ?? "#efede6",
             0.35,
             scene,
           ),

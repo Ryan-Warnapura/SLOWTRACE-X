@@ -215,9 +215,10 @@ export default function SolarSystem({
       >
         <div className="solar-toolbar">
           <div className="solar-source">
-            <Orbit size={17} />
             <span>
-              {dir ? "ICRS · ANGULAR DIRECTION" : "NASA / JPL · HORIZONS"}
+              {dir
+                ? "Angular direction in ICRS"
+                : "Positions from NASA/JPL Horizons"}
             </span>
           </div>
           <div className="solar-mode" aria-label="Solar system view">
@@ -247,8 +248,8 @@ export default function SolarSystem({
           <div className="solar-graphic-key">
             <span className="solar-status-dot" />
             {dir
-              ? "Unit direction · no distance axis"
-              : "Geometric heliocentric positions · au"}
+              ? "Unit direction, no distance axis"
+              : "Geometric heliocentric positions, in au"}
           </div>
           {renderFail ? (
             <PlanarFallback
@@ -290,10 +291,10 @@ export default function SolarSystem({
           )}
           <div className="solar-stage-note">
             {renderFail
-              ? "Planar fallback · 3D rendering unavailable"
+              ? "Planar fallback, 3D rendering unavailable"
               : dir
                 ? "Drag to rotate the direction sphere"
-                : "Drag to rotate · pinch or scroll to zoom"}
+                : "Drag to rotate, pinch or scroll to zoom"}
           </div>
         </div>
         {!dir && (
@@ -355,7 +356,7 @@ export default function SolarSystem({
           <span>
             {dir
               ? "J2000 equatorial direction display"
-              : "Positions to scale · marker sizes illustrative"}
+              : "Positions to scale, marker sizes illustrative"}
           </span>
           <div>
             {!dir && (
@@ -384,9 +385,7 @@ export default function SolarSystem({
       <aside className="solar-inspector" aria-label="Object inspector">
         {dir ? (
           <>
-            <div className="solar-inspector-kicker">
-              <Crosshair size={14} /> DEEPTRACE SKY DIRECTION
-            </div>
+            <p className="solar-inspector-kicker">DeepTrace sky direction</p>
             <h2>{dir.label || dir.id || "Selected sky direction"}</h2>
             <p>
               This ray represents the candidate’s published ICRS direction. Its
@@ -409,7 +408,7 @@ export default function SolarSystem({
             </dl>
             {association && (
               <div className="solar-catalog-context">
-                <strong>Catalog association · {association.name}</strong>
+                <strong>Catalog association: {association.name}</strong>
                 <p>
                   Published position checks support this association at the
                   measured epochs.{" "}
@@ -455,18 +454,15 @@ export default function SolarSystem({
           </>
         ) : (
           <>
-            <div className="solar-inspector-kicker">
-              <CircleDot size={14} /> EPHEMERIS OBJECT
-            </div>
             <h2>
               <span
-                style={{ background: BODY_COLORS[selected] || "#8ceaff" }}
+                style={{ background: BODY_COLORS[selected] || "#efede6" }}
               />
               {body?.name ?? "Sun"}
             </h2>
             <p>
-              {body?.classification ?? "Star and coordinate origin"} ·{" "}
-              {computed ? "Interpolated position" : "Sampled position"}
+              {body?.classification ?? "Star and coordinate origin"},{" "}
+              {computed ? "interpolated position" : "sampled position"}
             </p>
             {coords && (
               <dl className="solar-measurements">
@@ -492,7 +488,7 @@ export default function SolarSystem({
                   onClick={() => chooseBody(id)}
                   aria-pressed={selected === id}
                 >
-                  <span style={{ background: BODY_COLORS[id] || "#8ceaff" }} />
+                  <span style={{ background: BODY_COLORS[id] || "#efede6" }} />
                   {name}
                 </button>
               ))}
@@ -572,7 +568,7 @@ function PlanarFallback({
       <div className="solar-direction-fallback">
         <Crosshair size={36} />
         <strong>
-          {fmt(direction.ra, 5)}° RA · {fmt(direction.dec, 5)}° Dec
+          {fmt(direction.ra, 5)}° RA, {fmt(direction.dec, 5)}° Dec
         </strong>
         <span>ICRS sky direction only</span>
       </div>
@@ -590,13 +586,13 @@ function PlanarFallback({
           key={r}
           r={r * scale}
           fill="none"
-          stroke="#243b5a"
+          stroke="#363a40"
           strokeWidth={scale * 0.003}
         />
       ))}
       {Object.entries(data.bodies).map(([id, body]) => {
         const coords = positionAt(body.samples, jd),
-          color = BODY_COLORS[id] || "#8ceaff";
+          color = BODY_COLORS[id] || "#efede6";
         if (!coords) return null;
         return (
           <g key={id}>
