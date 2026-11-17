@@ -561,19 +561,16 @@ export default function Atlas({
     <section className="sky-atlas" aria-labelledby="sky-atlas-title">
       <header className="sky-atlas-header">
         <div>
-          <div className="sky-atlas-kicker">
-            <Compass size={14} /> CELESTIAL CARTOGRAPHY
-          </div>
-          <h1 id="sky-atlas-title">
-            Sky Atlas<span>.</span>
+          <h1 id="sky-atlas-title" className="title-page">
+            Sky Atlas
           </h1>
-          <p>
+          <p className="lede">
             Find a position in the sky and open the real SPHEREx observations
             behind it.
           </p>
         </div>
         <span className="sky-atlas-reference">
-          <span /> ICRS <i /> J2000 axes
+          ICRS coordinates, J2000 axes
         </span>
       </header>
       <div className="sky-atlas-shell">
@@ -714,8 +711,8 @@ export default function Atlas({
                         setBackdrop(event.target.value as Backdrop)
                       }
                     >
-                      <option value="optical">Optical · NASA SVS</option>
-                      <option value="infrared">Infrared · SPHEREx DR1</option>
+                      <option value="optical">Optical, NASA SVS</option>
+                      <option value="infrared">Infrared, SPHEREx DR1</option>
                       <option value="none">Coordinate guide only</option>
                     </select>
                     {backdrop === "optical" && (
@@ -959,7 +956,7 @@ export default function Atlas({
                 {hover.mark.name}
                 {hover.mark.kind === "field" &&
                   hover.mark.status &&
-                  ` · ${displayStatus(hover.mark.status)}`}
+                  `, ${displayStatus(hover.mark.status)}`}
               </span>
             )}
             <span id="sky-atlas-help" className="sky-atlas-visually-hidden">
@@ -1012,15 +1009,13 @@ export default function Atlas({
               —
             </span>
             <span className="sky-atlas-orientation">
-              N ↑ <span>·</span> RA ←
+              North up, RA increases left
             </span>
           </div>
         </div>
         <aside className="sky-atlas-sidebar" aria-label="Selected sky field">
           <div className="sky-atlas-selection" aria-live="polite">
-            <div className="sky-atlas-rail-label">
-              <Crosshair size={14} /> ACTIVE FIELD
-            </div>
+            <div className="sky-atlas-rail-label">Active field</div>
             <div className="sky-atlas-selection-title">
               <h2>{selected.name}</h2>
               <button
@@ -1060,7 +1055,7 @@ export default function Atlas({
               <p>
                 {candidate.observations.length} source observations on record
                 {Number.isFinite(candidate.evidence.nominalSnr)
-                  ? ` · nominal S/N ${candidate.evidence.nominalSnr?.toFixed(2)}`
+                  ? `, nominal S/N ${candidate.evidence.nominalSnr?.toFixed(2)}`
                   : ""}
                 .
               </p>
@@ -1093,7 +1088,7 @@ export default function Atlas({
             )}
           </div>
           <div className="sky-atlas-targets">
-            <div className="sky-atlas-rail-label">NASA CHALLENGE TARGETS</div>
+            <div className="sky-atlas-rail-label">Challenge targets</div>
             {targetMarks.map((mark) => (
               <button
                 key={mark.id}
@@ -1109,7 +1104,7 @@ export default function Atlas({
           </div>
           {bookmarks.length > 0 && (
             <div className="sky-atlas-targets sky-atlas-saved">
-              <div className="sky-atlas-rail-label">SAVED FIELDS</div>
+              <div className="sky-atlas-rail-label">Saved fields</div>
               {bookmarks.map((mark) => (
                 <button
                   key={`${mark.id}-${mark.ra}-${mark.dec}`}
@@ -1139,22 +1134,22 @@ export default function Atlas({
               "Sky imagery unavailable. Coordinates and overlays remain usable. "
             ) : backdrop === "infrared" ? (
               <>
-                NASA/IPAC IRSA ·{" "}
+                Infrared:{" "}
                 <a href={infraredSource} target="_blank" rel="noreferrer">
                   SPHEREx DR1 HiPS frame 42
-                </a>{" "}
-                · Display preview
+                </a>
+                , NASA/IPAC IRSA. Display preview.
               </>
             ) : backdrop === "optical" ? (
               <>
-                NASA SVS ·{" "}
+                Optical:{" "}
                 <a href={opticalSource} target="_blank" rel="noreferrer">
                   Deep Star Maps
-                </a>{" "}
-                · Gaia DR2, Hipparcos and Tycho
+                </a>
+                , NASA SVS, from Gaia DR2, Hipparcos and Tycho.
               </>
             ) : (
-              "ICRS coordinates · Imagery off"
+              "ICRS coordinates. Imagery off."
             )}
           </span>
           {layers.bulk && bulk.snapshot && (
@@ -1167,15 +1162,15 @@ export default function Atlas({
               detector footprints shown
               {(bulk.snapshot.coverage.footprintsTruncated ||
                 bulk.snapshot.footprints.length > 1000) &&
-                " · map subset"}
-              {" · WCS image outlines "}
+                ", map subset"}
+              {", WCS image outlines. "}
               <a href="/?page=stats">Survey area and methods</a>
             </span>
           )}
           {snapshot && (layers.fields || layers.candidates) && (
             <span className="sky-atlas-survey-note">
-              Published snapshot {snapshot.generatedAt.slice(0, 10)} ·{" "}
-              {snapshot.fields.length} recorded fields ·{" "}
+              Published snapshot {snapshot.generatedAt.slice(0, 10)}:{" "}
+              {snapshot.fields.length} recorded fields,{" "}
               {snapshot.candidates.length} recorded candidates
             </span>
           )}
@@ -1183,7 +1178,7 @@ export default function Atlas({
         <span className="sky-atlas-help">
           {view === "accessible"
             ? "Select a position to inspect"
-            : "Drag to pan · Scroll to zoom · Click to select"}
+            : "Drag to pan, scroll to zoom, click to select"}
         </span>
       </footer>
     </section>

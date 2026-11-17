@@ -4,7 +4,7 @@
   --sky-faint: #8b9396;
   --sky-border: #1f2426;
   --sky-surface: #111416;
-  --sky-cyan: #8b9396;
+  --sky-cyan: var(--text);
   --sky-periwinkle: #e6e6e6;
   color: var(--sky-ink);
   max-width: 1720px;
@@ -29,9 +29,7 @@
   gap: 8px;
   align-items: center;
   color: var(--sky-faint);
-  font: 600 10px/1.4 "IBM Plex Mono",
-    ui-monospace,
-    monospace;
+  font: 700 12px/1.4 var(--ui);
   letter-spacing: 0;
 }
 .sky-atlas-kicker {
@@ -60,9 +58,7 @@
   align-items: center;
   gap: 8px;
   color: var(--sky-muted);
-  font: 500 10px/1.4 "IBM Plex Mono",
-    ui-monospace,
-    monospace;
+  font: 400 12px/1.4 var(--ui);
   white-space: nowrap;
 }
 .sky-atlas-reference span,
@@ -254,8 +250,7 @@
   min-width: 17px;
   border-radius: 4px;
   text-align: center;
-  font: 500 10px/16px "IBM Plex Mono",
-    monospace;
+  font: 400 12px/16px var(--ui);
 }
 .sky-atlas-popover {
   position: absolute;
@@ -278,8 +273,7 @@
 .sky-atlas-menu-head {
   color: var(--sky-faint);
   display: block;
-  font: 600 10px/1.4 "IBM Plex Mono",
-    monospace;
+  font: 700 12px/1.4 var(--ui);
   text-transform: none;
   letter-spacing: 0;
   padding: 7px 7px 6px;
@@ -388,8 +382,7 @@
   border-radius: 6px;
   pointer-events: none;
   justify-content: space-between;
-  font: 500 10px/1.25 "IBM Plex Mono",
-    monospace;
+  font: 400 12px/1.25 var(--ui);
 }
 .sky-atlas-projection {
   display: flex;
@@ -422,9 +415,7 @@
   stroke-width: 3;
   paint-order: stroke;
   stroke-linejoin: round;
-  font: 500 10px "IBM Plex Mono",
-    ui-monospace,
-    monospace;
+  font: 400 12px var(--ui);
   fill: #e6e6e6;
 }
 .sky-atlas-grid-label {
@@ -500,8 +491,7 @@
   fill: #e6e6e6;
   stroke: #0b0d0e;
   stroke-width: 3.5;
-  font: 600 11px "IBM Plex Mono",
-    monospace;
+  font: 700 12px var(--ui);
 }
 .sky-atlas-solid {
   fill: #e6e6e6;
@@ -585,8 +575,7 @@
 .sky-atlas-coordinates dd {
   margin: 5px 0 0;
   color: var(--sky-ink);
-  font: 500 0.76rem/1.2 "IBM Plex Mono",
-    monospace;
+  font: 400 13px/1.2 var(--ui);
   white-space: nowrap;
 }
 .sky-atlas-selection p {
@@ -883,4 +872,84 @@
 }
 .sky-atlas-mark.field[data-status="error"] {
   stroke: #ff9985;
+}
+
+/* Alignment with the design system (DESIGN.md). */
+.sky-atlas-header {
+  align-items: flex-end;
+  margin: var(--s-4) 0 var(--s-6);
+}
+.sky-atlas-header h1 {
+  margin: 0 0 var(--s-2);
+  font-family: var(--display);
+  font-size: var(--fs-32);
+  font-weight: 400;
+  line-height: 1.1;
+}
+.sky-atlas-header p {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--fs-16);
+}
+.sky-atlas-reference {
+  color: var(--text-3);
+  font: 400 var(--fs-12) var(--ui);
+}
+.sky-atlas-rail-label {
+  color: var(--text-3);
+  font: 400 var(--fs-12) / 1.4 var(--ui);
+}
+.sky-atlas-selection-title h2 {
+  font-family: var(--display);
+  font-size: var(--fs-24);
+  font-weight: 400;
+}
+.sky-atlas-targets button > span:not(.sky-atlas-dot) {
+  font-family: var(--display);
+  font-size: var(--fs-16);
+  font-style: italic;
+}
+.sky-atlas-saved button > span {
+  font-family: var(--ui);
+  font-size: var(--fs-13);
+  font-style: normal;
+}
+.sky-atlas-open,
+.sky-atlas-open:hover {
+  border-color: var(--text);
+  border-radius: var(--r-key);
+  background: var(--text);
+  color: var(--on-text);
+  font-weight: 700;
+}
+.sky-atlas-open:hover {
+  background: #fff;
+}
+.sky-atlas-secondary {
+  border-color: var(--rule-strong);
+  border-radius: var(--r-key);
+  background: var(--key);
+}
+.sky-atlas-shell {
+  border-color: var(--rule);
+  border-radius: var(--r-well);
+  background: var(--well);
+}
+@media (max-width: 620px) {
+  .sky-atlas-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .sky-atlas-reference {
+    font-size: var(--fs-12);
+  }
+  .sky-atlas-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-4);
+  }
+  .sky-atlas-targets {
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--rule);
+  }
 }
