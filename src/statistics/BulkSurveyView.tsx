@@ -4,7 +4,6 @@ import {
   ArrowDownToLine,
   CircleAlert,
   Crosshair,
-  Database,
   Globe2,
   Map,
   Telescope,

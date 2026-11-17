@@ -2,16 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowLeft,
-  ArrowRight,
-  ArrowUpRight,
-  BookOpen,
-  ExternalLink,
-  Globe2,
-  Orbit,
   LoaderCircle,
-  Radar,
-  ShieldCheck,
-  Telescope,
 } from "lucide-react";
 import { date, download, fmt, post, request } from "./lib";
 import { useBulkSurvey } from "./bulkSurvey";

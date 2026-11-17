@@ -103,7 +103,12 @@ Labels are sentence case; nothing is set in capitals or letter-spaced.
 - **Table**: rules above the header and below the last row, hairlines between
   rows, numbers right aligned.
 - **Charts**: drawn in wells on a faint graph-paper grid, engraving-white axes,
-  band colours for wavelength, white ring for the selected point.
+  band colours for wavelength or detector, white ring for the selected point.
+  Series that are not wavelengths use white (`#efede6`), then warm grey
+  (`#8d8b85`), then amber (`#f2b84b`), in that order. Status counts use the
+  lamp colours.
+- **3D scenes** (Solar System, track space): graphite grid lines, white for the
+  object of interest, planets in warmed approximations of their visual tints.
 
 ## Layout
 
@@ -153,6 +158,15 @@ collapses to a menu and the field bar wraps.
 The blink is the only thing that moves by itself, and only when asked, except
 on the Mission page where one plate blinks to show what the tool does. It stops
 under `prefers-reduced-motion`. Everything else is a 120ms state change.
+
+## Files
+
+- `src/styles/tokens.css` defines every colour, size and font. It also aliases
+  the older names (`--s1`, `--mono`, `--line`, ...) that the Atlas, Solar
+  System and Statistics stylesheets still use, so they read the same tokens.
+- `src/styles/base.css`, `components.css`, `shell.css`, `plate.css`,
+  `observe.css`, `mission.css` and `tools.css` hold the rest, in that order.
+- `src/wavelength.ts` holds the wavelength code for scripts and charts.
 
 ## Imagery
 

@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  CircleDot,
   Compass,
   Crosshair,
   ExternalLink,

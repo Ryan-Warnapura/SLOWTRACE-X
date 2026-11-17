@@ -6,7 +6,6 @@ import {
   Bookmark,
   Check,
   ChevronRight,
-  Compass,
   Crosshair,
   Focus,
   Globe2,

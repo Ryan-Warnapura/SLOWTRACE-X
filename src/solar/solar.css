@@ -173,8 +173,7 @@
   top: 0;
   left: 0;
   pointer-events: none;
-  font: 620 0.69rem/1.1 system-ui,
-    sans-serif;
+  font: 700 12px/1.1 var(--ui);
   color: #e6e6e6;
   text-shadow: none;
   white-space: nowrap;

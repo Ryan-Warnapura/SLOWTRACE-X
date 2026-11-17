@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair } from "lucide-react";
+
 import { fmt, quantile } from "./lib";
 
 type Values = (number | null)[];
