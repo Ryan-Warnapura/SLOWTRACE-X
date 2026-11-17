@@ -49,7 +49,7 @@ export default function TrackSpace({ candidate }: { candidate: Candidate }) {
     }
     setUnavailable(false);
     setActiveIndex(0);
-    renderer.setClearColor(0x07111f, 0);
+    renderer.setClearColor(0x08090b, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
     renderer.domElement.setAttribute("aria-hidden", "true");
     surface.appendChild(renderer.domElement);
@@ -83,7 +83,7 @@ export default function TrackSpace({ candidate }: { candidate: Candidate }) {
     );
     const render = () => renderer.render(scene, camera);
 
-    const grid = new THREE.GridHelper(2.4, 8, 0x2e5374, 0x1c324b);
+    const grid = new THREE.GridHelper(2.4, 8, 0x4f545c, 0x2b2e33);
     grid.position.y = -1.2;
     scene.add(grid);
     const line = (points: THREE.Vector3[], color: number, opacity = 1) => {
@@ -98,20 +98,20 @@ export default function TrackSpace({ candidate }: { candidate: Candidate }) {
       return segment;
     };
     const origin = new THREE.Vector3(-1.2, -1.2, -1.2);
-    line([origin, new THREE.Vector3(1.3, -1.2, -1.2)], 0x6cd3fb, 0.85);
-    line([origin, new THREE.Vector3(-1.2, 1.3, -1.2)], 0xa7a1ff, 0.85);
-    line([origin, new THREE.Vector3(-1.2, -1.2, 1.3)], 0xffad82, 0.85);
-    line(path, 0x7ce4ff, 0.8);
+    line([origin, new THREE.Vector3(1.3, -1.2, -1.2)], 0xefede6, 0.85);
+    line([origin, new THREE.Vector3(-1.2, 1.3, -1.2)], 0x8d8b85, 0.85);
+    line([origin, new THREE.Vector3(-1.2, -1.2, 1.3)], 0xf2b84b, 0.85);
+    line(path, 0xefede6, 0.8);
     line(
       path.map((point) => new THREE.Vector3(point.x, -1.19, point.z)),
-      0x456b90,
+      0x4f545c,
       0.7,
     );
 
     const geometry = new THREE.SphereGeometry(0.063, 16, 10);
     const markers = path.map((point, index) => {
-      line([point, new THREE.Vector3(point.x, -1.19, point.z)], 0x6385ab, 0.36);
-      const color = samples[index].sampleValid === false ? 0xffac82 : 0x87e6ff;
+      line([point, new THREE.Vector3(point.x, -1.19, point.z)], 0x363a40, 0.36);
+      const color = samples[index].sampleValid === false ? 0xf26b5e : 0xefede6;
       const marker = new THREE.Mesh(
         geometry,
         new THREE.MeshBasicMaterial({ color }),
@@ -224,13 +224,13 @@ export default function TrackSpace({ candidate }: { candidate: Candidate }) {
       </div>
       <div className="stats-legend">
         <span>
-          <i style={{ background: "#6cd3fb" }} /> East (″)
+          <i style={{ background: "#efede6" }} /> East (″)
         </span>
         <span>
-          <i style={{ background: "#a7a1ff" }} /> North (″)
+          <i style={{ background: "#8d8b85" }} /> North (″)
         </span>
         <span>
-          <i style={{ background: "#ffad82" }} /> Time (days)
+          <i style={{ background: "#f2b84b" }} /> Time (days)
         </span>
       </div>
       <div className="stats-track-epochs" aria-label="Track observation epochs">

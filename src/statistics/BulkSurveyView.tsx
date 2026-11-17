@@ -118,11 +118,11 @@ export default function BulkSurveyView({
       <section className="bulk-survey-hero" aria-labelledby="bulk-title">
         <div className="bulk-survey-title">
           <div>
-            <span className="stats-kicker">
-              <Database size={14} /> NASA SPHEREx DR1 + QR3
-            </span>
             <h2 id="bulk-title">Large archive survey</h2>
-            <p>Measured results from the published SPHEREx survey batches.</p>
+            <p>
+              Measured results from the published survey batches over NASA
+              SPHEREx DR1 and QR3.
+            </p>
           </div>
           <div className="stats-intro-meta">
             <span>Published {absoluteTime(snapshot.generatedAt)} UTC</span>

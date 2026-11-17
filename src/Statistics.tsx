@@ -50,27 +50,24 @@ import type {
 } from "./statistics/data";
 import "./statistics/statistics.css";
 
+import { BAND_COLORS } from "./wavelength";
 const TrackSpace = lazy(() => import("./statistics/TrackSpace"));
 const number = new Intl.NumberFormat("en-CA");
 const isCandidateInput = (record: Candidate | undefined): record is Candidate =>
   Boolean(record);
 const label = (n: unknown, precision = 2) =>
   finite(n) ? n.toFixed(precision) : "—";
-const colors = [
-  "#79e5ff",
-  "#b4a0ff",
-  "#ffbd86",
-  "#8de7b3",
-  "#87aaff",
-  "#f1a9d4",
-];
-const tick = { fill: "#9caec8", fontSize: 11 };
-const chartGrid = "#233650";
+/** Detector colours follow the wavelength code in DESIGN.md. */
+const colors = BAND_COLORS;
+/** Series that are not wavelengths: primary, secondary, threshold. */
+const SERIES = ["#efede6", "#8d8b85", "#f2b84b"] as const;
+const tick = { fill: "#8d8b85", fontSize: 11 };
+const chartGrid = "#363a40";
 const smallAxisLabel = (value: string) => ({
   value,
   position: "insideBottom" as const,
   offset: -15,
-  fill: "#9caec8",
+  fill: "#8d8b85",
   fontSize: 11,
 });
 
@@ -107,9 +104,7 @@ export default function Statistics(props: Props) {
             </button>
           ))}
         </nav>
-        <span className="stats-scope">
-          <span /> Published survey records
-        </span>
+        <span className="lamp">Published survey records</span>
       </div>
       {section === "Large archive survey" ? (
         <BulkSurveyView onAtlas={props.onAtlas} />
@@ -181,9 +176,6 @@ function PilotStatistics({
     <div className="statistics-center">
       <div className="stats-intro">
         <div>
-          <span className="stats-kicker">
-            <Activity size={15} /> Survey telemetry
-          </span>
           <h2>{snapshot.label}</h2>
           <p>
             Trace the survey from calibrated SPHEREx images to motion trials and
@@ -191,7 +183,7 @@ function PilotStatistics({
           </p>
         </div>
         <div className="stats-intro-meta">
-          <span>Published {utcDate(snapshot.generatedAt)} · UTC</span>
+          <span>Published {utcDate(snapshot.generatedAt)} UTC</span>
           <a
             className="stats-button"
             href="/survey.json"
@@ -245,22 +237,18 @@ function PilotStatistics({
 }
 
 function Metric({
-  icon,
   name,
   value,
   note,
 }: {
-  icon: ReactNode;
+  icon?: ReactNode;
   name: string;
   value: string;
   note: string;
 }) {
   return (
     <div className="stats-metric">
-      <div>
-        {icon}
-        <span>{name}</span>
-      </div>
+      <span>{name}</span>
       <strong>{value}</strong>
       <small>{note}</small>
     </div>
@@ -293,12 +281,12 @@ function PlotCard({
 }
 
 const statuses = [
-  { key: "complete", name: "Complete", color: "#79e5ff" },
-  { key: "empty", name: "No exposures", color: "#8de7b3" },
-  { key: "incomplete", name: "Incomplete", color: "#b4a0ff" },
-  { key: "error", name: "Failed", color: "#ffad9f" },
-  { key: "running", name: "Running", color: "#87aaff" },
-  { key: "queued", name: "Queued", color: "#74849a" },
+  { key: "complete", name: "Complete", color: "#63d18f" },
+  { key: "empty", name: "No exposures", color: "#8d8b85" },
+  { key: "incomplete", name: "Incomplete", color: "#f2b84b" },
+  { key: "error", name: "Failed", color: "#f26b5e" },
+  { key: "running", name: "Running", color: "#efede6" },
+  { key: "queued", name: "Queued", color: "#4f545c" },
 ];
 
 function SurveyView({
@@ -413,8 +401,8 @@ function SurveyView({
               ))}
               <div className="stats-legend">
                 <span>
-                  <i style={{ background: colors[0] }} /> Exposure used by
-                  analysis
+                  Each mark is an exposure used by the analysis, coloured by
+                  detector band
                 </span>
                 <span>Dates in UTC</span>
               </div>
@@ -626,9 +614,9 @@ function ProgressChart({
                 dataKey="count"
                 name="Fields analyzed"
                 type="stepAfter"
-                stroke="#83e9ff"
-                strokeWidth={2}
-                dot={{ r: 3, strokeWidth: 1, fill: "#83e9ff" }}
+                stroke={SERIES[0]}
+                strokeWidth={1.5}
+                dot={{ r: 2.5, strokeWidth: 1, fill: SERIES[0] }}
                 isAnimationActive={false}
               />
             </LineChart>
@@ -1099,7 +1087,7 @@ function DetectionDistribution({ candidates }: { candidates: Candidate[] }) {
               />
               <YAxis allowDecimals={false} tick={tick} width={30} />
               <Tooltip
-                cursor={{ fill: "#21344b" }}
+                cursor={{ fill: "#2b2e33" }}
                 content={({ active, payload }) => {
                   const bin = payload?.[0]?.payload as
                     (typeof bins)[number] | undefined;
@@ -1121,8 +1109,8 @@ function DetectionDistribution({ candidates }: { candidates: Candidate[] }) {
               />
               <Bar
                 dataKey="count"
-                fill="#72dcf4"
-                radius={[3, 3, 0, 0]}
+                fill="#b6b4ad"
+                radius={[1, 1, 0, 0]}
                 isAnimationActive={false}
               />
             </BarChart>
@@ -1227,11 +1215,11 @@ function SpectrumSamples({ candidate }: { candidate: Candidate }) {
                   ) : null;
                 }}
               />
-              <Scatter data={data} fill={colors[0]} isAnimationActive={false}>
+              <Scatter data={data} fill={SERIES[0]} isAnimationActive={false}>
                 <ErrorBar
                   dataKey="uncertainty"
                   direction="y"
-                  stroke={colors[1]}
+                  stroke={SERIES[1]}
                   width={5}
                 />
               </Scatter>
@@ -1278,17 +1266,17 @@ function ValidationView({ onLab }: { onLab?: () => void }) {
     {
       name: "Shift and stack",
       recovered: record.recovered.shiftStack,
-      color: colors[0],
+      color: SERIES[0],
     },
     {
       name: "Static stack",
       recovered: record.recovered.staticStack,
-      color: colors[1],
+      color: SERIES[1],
     },
     {
       name: "Single exposure",
       recovered: record.recovered.bestSingleFrame,
-      color: colors[2],
+      color: SERIES[2],
     },
   ];
   const trials = record.measurements.map((item, index) => ({
@@ -1401,7 +1389,7 @@ function ValidationView({ onLab }: { onLab?: () => void }) {
                 />
                 <ReferenceLine
                   y={record.thresholdSnr}
-                  stroke="#c2c8e0"
+                  stroke="#8d8b85"
                   strokeDasharray="5 5"
                 />
                 <Tooltip

@@ -67,3 +67,15 @@
     --gutter: 16px;
   }
 }
+
+/* Aliases for names used by the older Atlas, Solar System and Statistics
+   stylesheets, so they draw from the same palette. */
+:root {
+  --s1: var(--well);
+  --s2: var(--key);
+  --sans: var(--ui);
+  /* Legacy "mono" meant tabular numbers; B612 digits are already tabular. */
+  --mono: var(--ui);
+  --muted: var(--text-2);
+  --line: var(--rule);
+}

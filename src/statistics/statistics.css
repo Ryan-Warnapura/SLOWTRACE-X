@@ -1,11 +1,11 @@
 .statistics-center {
-  --stats-ink: #111416;
-  --stats-panel: #111416;
-  --stats-text: #e6e6e6;
-  --stats-secondary: #8b9396;
-  --stats-line: #1f2426;
-  --stats-accent: #e6e6e6;
-  --stats-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --stats-ink: var(--deep);
+  --stats-panel: var(--well);
+  --stats-text: var(--text);
+  --stats-secondary: var(--text-2);
+  --stats-line: var(--rule);
+  --stats-accent: var(--text);
+  --stats-mono: var(--ui);
   color: var(--stats-text);
   display: grid;
   gap: 20px;
@@ -779,4 +779,102 @@
   .stats-metric {
     padding: 10px;
   }
+}
+
+
+/* Alignment with the design system (DESIGN.md). */
+.stats-intro,
+.bulk-survey-hero {
+  background: var(--well);
+  border-color: var(--rule);
+  border-radius: var(--r-well);
+}
+.stats-intro h2,
+.bulk-survey-title h2 {
+  font-family: var(--display);
+  font-size: var(--fs-24);
+  font-weight: 400;
+}
+.stats-panel {
+  background: var(--well);
+  border-color: var(--rule);
+  border-radius: var(--r-well);
+}
+.stats-panel-header h3,
+.bulk-result-card h3,
+.bulk-survey-panel h3 {
+  font-size: var(--fs-14);
+  font-weight: 700;
+}
+.stats-panel-header h3 svg,
+.bulk-result-card h3 svg,
+.bulk-survey-panel h3 svg,
+.stats-metric svg,
+.stats-button svg + svg {
+  display: none;
+}
+.stats-metrics {
+  gap: var(--s-6);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.stats-metric {
+  padding: var(--s-3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--rule-strong);
+}
+.stats-metric > span {
+  color: var(--text-3);
+  font-size: var(--fs-13);
+}
+.stats-metric > strong {
+  margin: var(--s-1) 0 2px;
+  font-family: var(--display);
+  font-size: var(--fs-32);
+  font-weight: 400;
+}
+.stats-metric small {
+  color: var(--text-3);
+}
+.stats-button,
+.stats-button-primary {
+  border-radius: var(--r-key);
+  font-size: var(--fs-13);
+}
+.stats-button-primary,
+.stats-button-primary:hover {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--on-text);
+  font-weight: 700;
+}
+.stats-candidate h4 {
+  font-family: var(--display);
+  font-size: var(--fs-20);
+  font-style: italic;
+  font-weight: 400;
+}
+@media (max-width: 900px) {
+  .stats-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-4);
+  }
+}
+@media (max-width: 760px) {
+  .stats-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .stats-tabs button {
+    flex: none;
+  }
+}
+.bulk-survey-progress strong,
+.bulk-result-card strong,
+.bulk-result-card dd {
+  font-family: var(--display);
+  font-weight: 400;
 }
