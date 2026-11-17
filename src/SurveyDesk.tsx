@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { date, download, fmt, post, request } from "./lib";
 import { useBulkSurvey } from "./bulkSurvey";
+import { bandColor } from "./wavelength";
+import type { CSSProperties } from "react";
 import type {
   Candidate,
   Investigation,
@@ -121,16 +123,19 @@ export default function SurveyDesk({
     );
   if (!snapshot)
     return (
-      <section className="panel tool-panel" role="status">
+      <div
+        className={`load-status${snapshotError ? " error" : ""}`}
+        role="status"
+      >
         {snapshotError ? (
-          `Survey records could not be loaded. ${snapshotError}`
+          <span>Survey records could not be loaded. {snapshotError}</span>
         ) : (
           <>
-            <LoaderCircle className="spinner" size={16} /> Loading survey
-            records…
+            <LoaderCircle className="spinner" size={15} />
+            <span>Loading survey records…</span>
           </>
         )}
-      </section>
+      </div>
     );
   const { summary } = snapshot;
   const needle = query.trim().toLowerCase();
@@ -166,13 +171,10 @@ export default function SurveyDesk({
     ...new Set(snapshot.candidates.map((c) => c.classification)),
   ];
   return (
-    <section className="panel tool-panel survey-desk">
-      <div className="panel-heading">
+    <section className="survey-desk">
+      <div className="well-head survey-head">
         <div>
-          <span className="eyebrow">
-            <Radar size={14} /> AUTOMATED SURVEY
-          </span>
-          <h2>{snapshot.label}</h2>
+          <h2 className="title-section">{snapshot.label}</h2>
           <p className="caption">
             Published {when(snapshot.generatedAt)}. Candidate records reflect
             completed motion searches.
@@ -189,7 +191,7 @@ export default function SurveyDesk({
           className="secondary"
           onClick={() => download("slowtrace-survey.json", snapshot)}
         >
-          <ArrowDownToLine size={15} /> Export survey
+          <ArrowDownToLine size={14} /> Export survey
         </button>
       </div>
       <div className="recovery-grid survey-metrics">
@@ -227,7 +229,7 @@ export default function SurveyDesk({
         </span>
       </div>
       <div className="survey-controls">
-        <div className="segmented">
+        <div className="segmented" role="group" aria-label="Survey records">
           <button
             className={screen === "candidates" ? "selected" : ""}
             onClick={() => setScreen("candidates")}
@@ -317,10 +319,16 @@ export default function SurveyDesk({
             {matches.slice(0, visible).map((c) => (
               <article key={c.id} className="finding-card">
                 <div className="finding-card-top">
-                  <span className="tag">
-                    D{c.detector} · {readable(c.classification)}
+                  <span
+                    className="band"
+                    style={{ "--band": bandColor(c.detector) } as CSSProperties}
+                  >
+                    D{c.detector}, {readable(c.classification)}
                   </span>
-                  <span>
+                  <span
+                    className="lamp"
+                    data-state={c.catalogInvestigation ? "ok" : "off"}
+                  >
                     {c.catalogInvestigation
                       ? "Catalog checked"
                       : "Review pending"}
@@ -328,15 +336,12 @@ export default function SurveyDesk({
                 </div>
                 <CandidateTrack input={c} compact />
                 <h3>
-                  <button onClick={() => show(c.id)}>
-                    {c.id}
-                    <ArrowUpRight size={16} />
-                  </button>
+                  <button onClick={() => show(c.id)}>{c.id}</button>
                 </h3>
                 <p>
                   {snapshot.fields.find((f) => f.id === c.fieldId)?.label ??
-                    "Survey field"}{" "}
-                  · {fmt(c.ra, 4)}°, {fmt(c.dec, 4)}°
+                    "Survey field"}
+                  , at {fmt(c.ra, 4)}°, {fmt(c.dec, 4)}°
                 </p>
                 <dl>
                   <div>
@@ -367,7 +372,7 @@ export default function SurveyDesk({
               className="secondary finding-more"
               onClick={() => setVisible((n) => n + 18)}
             >
-              Show more candidates <ArrowRight size={15} />
+              Show more candidates
             </button>
           )}
         </div>
@@ -377,18 +382,24 @@ export default function SurveyDesk({
             <details key={f.id}>
               <summary>
                 <strong>{f.label}</strong>
-                <span>
-                  {fmt(f.ra, 4)}°, {fmt(f.dec, 4)}° · D{f.detector}
+                <span className="num">
+                  {fmt(f.ra, 4)}°, {fmt(f.dec, 4)}°
+                </span>
+                <span
+                  className="band"
+                  style={{ "--band": bandColor(f.detector) } as CSSProperties}
+                >
+                  D{f.detector}
                 </span>
                 <span className="tag">{readable(f.status)}</span>
               </summary>
               <p>{f.latest?.message || "No processing attempt recorded."}</p>
               <p className="caption">
-                {f.latest?.observationsFetched ?? 0} retrieved ·{" "}
-                {f.latest?.observationsAnalyzed ?? 0} analyzed ·{" "}
-                {fmt(f.latest?.baselineDays, 1)} days · metadata{" "}
+                {f.latest?.observationsFetched ?? 0} retrieved,{" "}
+                {f.latest?.observationsAnalyzed ?? 0} analyzed, over{" "}
+                {fmt(f.latest?.baselineDays, 1)} days. Metadata{" "}
                 {readable(f.latest?.searchStatus)}
-                {f.latest?.finishedAt ? ` · ${when(f.latest.finishedAt)}` : ""}
+                {f.latest?.finishedAt ? `, ${when(f.latest.finishedAt)}` : ""}
               </p>
               {f.latest?.notes?.map((n, i) => (
                 <p className="caption" key={i}>
@@ -450,30 +461,28 @@ function CandidateTrack({
     >
       <path
         d="M18 51H224 M120 7V95"
-        stroke="#587495"
-        opacity=".48"
+        stroke="#4f545c"
         strokeDasharray="3 5"
       />
       <path
         d="M64 12V90 M176 12V90 M20 23H220 M20 79H220"
-        stroke="#293b58"
-        opacity=".6"
+        stroke="#23262b"
       />
       {!compact && (
-        <text x="8" y="15" fill="#a6bed8" fontSize="8">
+        <text x="8" y="15" fill="#b6b4ad" fontSize="8">
           N
         </text>
       )}
       {!compact && (
-        <text x="221" y="46" fill="#a6bed8" fontSize="8">
+        <text x="221" y="46" fill="#b6b4ad" fontSize="8">
           E
         </text>
       )}
       <polyline
         points={coordinates.map((p) => `${p.u},${p.v}`).join(" ")}
         fill="none"
-        stroke="#88dff4"
-        strokeWidth="1.4"
+        stroke="#efede6"
+        strokeWidth="1.2"
       />
       {coordinates.map((p, i) => (
         <circle
@@ -481,16 +490,16 @@ function CandidateTrack({
           cx={p.u}
           cy={p.v}
           r={i === coordinates.length - 1 ? 4 : 2.7}
-          stroke="#91defa"
-          fill={i === coordinates.length - 1 ? "#9eeaff" : "#0c1e31"}
+          stroke="#efede6"
+          fill={i === coordinates.length - 1 ? "#efede6" : "#000"}
         >
           <title>
-            {date(p.mjd)} · east {fmt(p.x, 2)}″ · north {fmt(p.y, 2)}″
+            {date(p.mjd)}, east {fmt(p.x, 2)}″, north {fmt(p.y, 2)}″
           </title>
         </circle>
       ))}
       {!compact && (
-        <text x="7" y="96" fill="#90accb" fontSize="8">
+        <text x="7" y="96" fill="#8d8b85" fontSize="8">
           ± {fmt(extent, 1)} arcsec
         </text>
       )}
@@ -576,17 +585,16 @@ function CandidateDetail({
     setReview("");
   }
   return (
-    <section className="panel tool-panel candidate-detail">
-      <button className="text-button" onClick={onBack}>
-        <ArrowLeft size={15} /> Survey records
+    <section className="candidate-detail">
+      <button className="text-button candidate-back" onClick={onBack}>
+        <ArrowLeft size={15} /> All survey records
       </button>
-      <div className="panel-heading">
+      <div className="well-head">
         <div>
-          <span className="eyebrow">CANDIDATE INVESTIGATION</span>
-          <h2>{candidate?.id ?? "DeepTrace peak"}</h2>
+          <h2 className="candidate-id">{candidate?.id ?? "DeepTrace peak"}</h2>
           <p className="caption">
-            ICRS {fmt(input.ra, 6)}°, {fmt(input.dec, 6)}° · reference MJD{" "}
-            {fmt(input.referenceMjd, 5)}
+            Candidate investigation at ICRS {fmt(input.ra, 6)}°,{" "}
+            {fmt(input.dec, 6)}°, reference MJD {fmt(input.referenceMjd, 5)}
           </p>
         </div>
         <span className="tag">
@@ -630,15 +638,6 @@ function CandidateDetail({
                 key={view}
                 onClick={() => onOpen(candidate, view)}
               >
-                {view === "observe" ? (
-                  <Telescope size={15} />
-                ) : view === "atlas" ? (
-                  <Globe2 size={15} />
-                ) : view === "solar" ? (
-                  <Orbit size={15} />
-                ) : view === "notebook" ? (
-                  <BookOpen size={15} />
-                ) : null}
                 {label}
               </button>
             ))}
@@ -656,10 +655,10 @@ function CandidateDetail({
             })
           }
         >
-          <ArrowDownToLine size={15} /> Export investigation
+          <ArrowDownToLine size={14} /> Export investigation
         </button>
       </div>
-      <h3>Observation evidence</h3>
+      <h3 className="candidate-section-title">Observation evidence</h3>
       {epochs.length > 1 && (
         <div className="finding-track-detail">
           <CandidateTrack input={input} />
@@ -714,26 +713,20 @@ function CandidateDetail({
           {candidate.observations.map((o) => (
             <li key={o.url}>
               <a href={o.url} target="_blank" rel="noreferrer">
-                {o.id} · {date(o.date ?? o.mjd)} <ExternalLink size={12} />
+                {o.id}, {date(o.date ?? o.mjd)}
               </a>
             </li>
           ))}
         </ul>
       )}
       <div className="section-title candidate-section">
-        <h3>
-          <ShieldCheck size={17} /> Catalog evidence and competing explanations
-        </h3>
+        <h3>Catalog evidence and competing explanations</h3>
         <button
           className="primary"
           onClick={() => void check()}
           disabled={busy}
         >
-          {busy ? (
-            <LoaderCircle className="spinner" size={15} />
-          ) : (
-            <Radar size={15} />
-          )}{" "}
+          {busy && <LoaderCircle className="spinner" size={15} />}
           {busy ? "Checking catalogs…" : "Check Gaia and NASA JPL"}
         </button>
       </div>
@@ -747,8 +740,8 @@ function CandidateDetail({
           <p className="caption">
             {when(
               report.checkedAt ?? report.investigatedAt ?? report.generatedAt,
-            )}{" "}
-            · {readable(report.classification)}
+            )}
+            , {readable(report.classification)}
           </p>
           {report.reasons?.map((r, i) => (
             <p key={i} className="candidate-reason">
@@ -764,7 +757,7 @@ function CandidateDetail({
               {report.hypotheses.map(
                 (item: { name: string; evidence: string }, index: number) => (
                   <li key={index}>
-                    <strong>{item.name}</strong> — {item.evidence}
+                    <strong>{item.name}.</strong> {item.evidence}
                   </li>
                 ),
               )}
@@ -788,7 +781,7 @@ function CandidateDetail({
         </p>
       )}
       <div className="candidate-section">
-        <h3>Review history</h3>
+        <h3 className="candidate-section-title">Review history</h3>
         <p className="caption">
           Your review entries and on-demand checks are stored in this browser
           and included in the download. Published automated attempts remain part
@@ -832,7 +825,7 @@ function CandidateDetail({
         {reviews.map((r, i) => (
           <article className="note" key={i}>
             <small>
-              {when(r.time)} · {r.interpretation}
+              {when(r.time)}, {r.interpretation}
             </small>
             <p>{r.note}</p>
           </article>
@@ -900,13 +893,12 @@ function Catalog({
               <span>{item.name ?? item.sourceId ?? "Catalog entry"}</span>
               {typeof (item.rmsArcsec ?? item.closestArcsec) === "number" && (
                 <>
-                  {" "}
-                  · {fmt(item.rmsArcsec ?? item.closestArcsec, 2)}″ separation
+                  , {fmt(item.rmsArcsec ?? item.closestArcsec, 2)}″ separation
                   (RMS where available)
                 </>
               )}
               {item.status && item.status !== "ok" && (
-                <> · {readable(item.status)}</>
+                <>, {readable(item.status)}</>
               )}
             </li>
           ))}
@@ -924,11 +916,11 @@ function Catalog({
         <ul>
           {checks.map((entry, index) => (
             <li key={index}>
-              {entry.mjd ? date(entry.mjd) : "Epoch"} ·{" "}
-              {entry.observer ?? "observer unavailable"} ·{" "}
+              {entry.mjd ? date(entry.mjd) : "Epoch"},{" "}
+              {entry.observer ?? "observer unavailable"},{" "}
               {readable(entry.status)}
               {entry.nearbyCount !== undefined
-                ? ` · ${entry.nearbyCount} nearby predictions`
+                ? `, ${entry.nearbyCount} nearby predictions`
                 : ""}
             </li>
           ))}

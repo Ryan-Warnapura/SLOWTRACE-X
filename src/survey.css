@@ -1,252 +1,282 @@
-.archive-tools,
-.frame-origin {
-  color: #8b9396;
-  font-size: 12px;
-  margin: 0 0 16px;
+/* Discoveries: the published survey, its trial peaks and one candidate's
+   evidence. */
+.survey-head {
+  margin-bottom: var(--s-6);
 }
-.archive-tools > summary,
-.frame-origin > summary {
-  cursor: pointer;
-  color: #e6e6e6;
-}
-.archive-tools[open] {
-  background: #171b1d;
-  border: 1px solid #1f2426;
-  border-radius: 6px;
-  padding: 14px;
-}
-.archive-tools p {
-  margin: 10px 0 0;
-}
-.frame-origin {
-  padding: 11px 16px;
-  margin: 0;
-  border-top: 1px solid #1f2426;
-}
-.frame-origin .checksum {
-  overflow-wrap: anywhere;
-}
-.archive-recovery {
-  margin: 0 0 16px;
-  padding: 12px 14px;
-  border: 1px solid #1f2426;
-  border-radius: 6px;
-  background: #171b1d;
-  color: #e6e6e6;
-  font-size: 12px;
-}
-.archive-recovery-message {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  line-height: 1.55;
-}
-.archive-recovery-message span {
-  flex: 1 1 245px;
-}
-.archive-recovery-message + details {
-  margin-top: 10px;
-}
-.archive-recovery summary {
-  cursor: pointer;
-  color: #e6e6e6;
-}
-.detector-options {
-  display: grid;
-  gap: 7px;
-  margin-top: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-}
-.detector-options button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-}
-.detector-options button span {
-  font-size: 12px;
-  color: #e6e6e6;
-}
-.compare-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  justify-content: space-between;
-  padding: 7px 14px;
-  border-bottom: 1px solid #1f2426;
-  font-size: 12px;
-  color: #8b9396;
-}
-.compare-controls label {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-.compare-controls input {
-  accent-color: #e6e6e6;
-}
-.compare-controls select {
-  font-size: inherit;
-  padding: 4px 6px;
-}
-.epoch-buttons {
-  padding: 0 14px 10px;
-  display: flex;
-  overflow-x: auto;
-  gap: 5px;
-}
-.epoch-buttons button {
-  border: 1px solid #1f2426;
-  border-radius: 6px;
-  background: #171b1d;
-  font-size: 12px;
-  white-space: nowrap;
-  padding: 6px 8px;
-}
-.epoch-buttons button[aria-pressed="true"] {
-  border-color: #3a4245;
-  background: #171b1d;
-  color: #e6e6e6;
-}
-.epoch-buttons span {
-  display: block;
-  color: #8b9396;
-  margin-top: 4px;
-}
-.survey-desk .panel-heading,
-.candidate-detail .panel-heading {
-  align-items: flex-start;
-}
-.survey-desk .panel-heading .caption,
-.candidate-detail .panel-heading .caption {
-  margin-top: 7px;
+.survey-head .caption {
+  margin-top: var(--s-1);
 }
 .survey-metrics {
-  margin: 5px 0 12px;
+  max-width: 1100px;
+  margin: 0 0 var(--s-4);
 }
-.survey-metrics strong {
-  font-variant-numeric: tabular-nums;
+.survey-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-6);
+  margin-bottom: var(--s-8);
+  color: var(--text-3);
+  font-size: var(--fs-13);
 }
-.survey-status,
+.survey-status span::first-letter {
+  text-transform: uppercase;
+}
+.survey-status strong {
+  margin-left: 4px;
+  color: var(--text);
+  font-weight: 400;
+}
 .survey-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
 }
-.survey-status {
-  font-size: 12px;
-  margin: 14px 0 25px;
-  color: #8b9396;
+.survey-controls > input {
+  width: 260px;
 }
-.survey-status span {
-  padding: 6px 9px;
-  border: 1px solid #1f2426;
-  border-radius: 5px;
-  text-transform: none;
+.survey-controls label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-2);
+  font-size: var(--fs-13);
 }
-.survey-status strong {
-  margin-left: 6px;
-  color: #e6e6e6;
+.candidate-count {
+  margin-bottom: var(--s-4);
 }
-.survey-controls {
-  margin: 16px 0;
+
+/* Trial peaks: a track diagram over a readout */
+.candidate-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--s-6);
 }
-.survey-controls input,
-.survey-controls select {
-  font-size: 12px;
-  padding: 7px;
+.finding-card {
+  display: grid;
+  align-content: start;
+  gap: var(--s-2);
+  min-width: 0;
+}
+.finding-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  order: 2;
+  color: var(--text-2);
+  font-size: var(--fs-12);
+}
+.finding-card-top .band::first-letter {
+  text-transform: uppercase;
+}
+.finding-track {
+  width: 100%;
+  border: 1px solid var(--rule-strong);
+  background: var(--field);
+}
+.finding-card .finding-track {
+  order: 1;
+}
+.finding-card h3 {
+  order: 3;
+  min-width: 0;
+}
+.finding-card h3 button {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: var(--code);
+  font-size: var(--fs-14);
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.finding-card h3 button:hover {
+  text-decoration-color: currentColor;
+}
+.finding-card > p {
+  order: 4;
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.finding-card dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-2);
+  order: 5;
+  margin: var(--s-1) 0 0;
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--rule);
+}
+.finding-card dt {
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.finding-card dd {
+  font-size: var(--fs-14);
+}
+.finding-more {
+  margin-top: var(--s-6);
+}
+
+/* Fields and attempts */
+.survey-fields {
+  border-top: 1px solid var(--rule);
 }
 .survey-fields > details {
-  border-top: 1px solid #1f2426;
-  padding: 12px 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
 }
 .survey-fields > details > summary {
-  cursor: pointer;
-  display: grid;
-  grid-template-columns: 1.2fr 1fr auto;
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  font-size: 12px;
+  gap: var(--s-1) var(--s-4);
+  font-size: var(--fs-13);
 }
-.survey-fields summary > span:not(.tag) {
-  color: #8b9396;
+.survey-fields summary strong {
+  min-width: 180px;
+  font-weight: 700;
 }
-.survey-fields p,
-.candidate-reason {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #e6e6e6;
+.survey-fields summary > span {
+  color: var(--text-2);
 }
-.candidate-detail > .text-button {
-  margin: 0 0 16px;
+.survey-fields summary .tag {
+  margin-left: auto;
 }
-.candidate-detail > h3 {
-  margin-top: 25px;
+.survey-fields details > p {
+  max-width: 96ch;
+  margin: var(--s-2) 0 0 19px;
+  color: var(--text-2);
+  font-size: var(--fs-13);
+}
+.survey-fields details > .raw-result {
+  margin-left: 19px;
+}
+.survey-desk > .raw-result {
+  margin-top: var(--s-8);
+}
+.survey-desk > .raw-result .caption {
+  margin-top: var(--s-2);
+}
+
+/* One candidate */
+.candidate-back {
+  margin: 0 0 var(--s-3) calc(var(--s-2) * -1);
+}
+.candidate-id {
+  font-family: var(--code);
+  font-size: var(--fs-20);
+  overflow-wrap: anywhere;
+}
+.candidate-detail > .recovery-grid {
+  max-width: 1100px;
+}
+.candidate-detail > .caption {
+  margin-bottom: var(--s-4);
+}
+.candidate-section-title,
+.candidate-section .section-title h3,
+.candidate-section > h3 {
+  font-size: var(--fs-14);
+  font-weight: 700;
+}
+.candidate-detail > .candidate-section-title {
+  margin: var(--s-8) 0 var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule-strong);
 }
 .candidate-section {
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid #1f2426;
+  margin-top: var(--s-8);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule-strong);
+}
+.candidate-section > .caption {
+  margin: var(--s-1) 0 var(--s-3);
+}
+.candidate-section textarea {
+  width: 100%;
+  max-width: 640px;
+}
+.finding-track-detail .caption {
+  max-width: 44ch;
+}
+.finding-track-detail {
+  display: grid;
+  grid-template-columns: minmax(240px, 480px) minmax(0, 1fr);
+  align-items: end;
+  gap: var(--s-6);
+  margin-bottom: var(--s-4);
+}
+.evidence-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  margin-top: var(--s-3);
+  list-style: none;
+  font-family: var(--code);
+  font-size: var(--fs-12);
+}
+.candidate-reason {
+  max-width: 88ch;
+  margin-top: var(--s-2);
+  color: var(--text-2);
 }
 .catalog-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-6);
+  margin: var(--s-4) 0;
 }
 .catalog-summary {
-  background: #171b1d;
-  border: 1px solid #1f2426;
-  border-radius: 6px;
-  padding: 14px;
-  min-width: 0;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--rule);
 }
 .catalog-summary h4 {
-  margin-bottom: 8px;
+  color: var(--text-3);
+  font-size: var(--fs-12);
 }
-.catalog-summary strong {
-  font-size: 12px;
-  color: #e6e6e6;
+.catalog-summary > strong {
+  display: block;
+  margin: 2px 0 var(--s-2);
+  font-weight: 700;
+}
+.catalog-summary > strong::first-letter {
+  text-transform: uppercase;
 }
 .catalog-summary ul,
 .candidate-hypotheses {
-  padding-left: 15px;
-  margin-bottom: 0;
-  font-size: 12px;
-  color: #8b9396;
-  line-height: 1.7;
+  display: grid;
+  gap: 6px;
+  max-width: 96ch;
+  padding-left: var(--s-4);
+  color: var(--text-2);
+  font-size: var(--fs-13);
 }
-.evidence-files {
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  list-style: none;
+.candidate-hypotheses {
+  margin: var(--s-3) 0;
 }
-.evidence-files a {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
-  border: 1px solid #1f2426;
-  border-radius: 5px;
-  font-size: 12px;
-  padding: 6px 8px;
-  color: #e6e6e6;
+.candidate-hypotheses strong {
+  color: var(--text);
 }
-@media (max-width: 680px) {
+
+@media (max-width: 760px) {
+  .survey-controls > input,
+  .survey-controls > select {
+    flex: 1 1 100%;
+    width: auto;
+  }
+  .finding-track-detail,
   .catalog-columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .survey-fields > details > summary {
-    grid-template-columns: 1fr auto;
-  }
-  .survey-fields summary > span:not(.tag) {
-    grid-row: 2;
-  }
-  .candidate-section.section-title {
-    align-items: flex-start;
-    flex-direction: column;
+  .survey-fields summary .tag {
+    margin-left: 0;
   }
 }
